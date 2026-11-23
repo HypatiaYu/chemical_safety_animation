@@ -992,4 +992,70 @@ document.getElementById('targetBubble').style.display='none';
  } catch(err){status.textContent='CONTROLLER ERROR: '+err.message;console.error(err)}
 })();
 </script>
+
+<!-- Ink-and-parchment storybook visual treatment -->
+<style id="storybook-style">
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Special+Elite&display=swap');
+:root{--paper:#dfcfaa;--ink:#201c1a;--ochre:#a17c48;--blood:#8b3e35}
+body{background:#272820;color:var(--paper);font-family:'Special Elite',Georgia,serif}
+body:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:4;background:repeating-linear-gradient(13deg,transparent 0 5px,#1d171009 6px 7px),radial-gradient(ellipse at center,transparent 37%,#100e0a8a 100%);mix-blend-mode:multiply}
+#hud,#help,#inventory,#prompt,#notice,#pbsPanel,#guide,#intro,#zoomCard{background:#d7c49e!important;color:#28221c!important;border:3px solid #241d19!important;border-radius:3px 12px 4px 10px!important;box-shadow:4px 5px 0 #1b1715,0 12px 30px #0009!important;outline:1px dashed #665238;outline-offset:-8px}
+#hud h1,#intro h2,#zoomHead h2,#pbsPanel strong,#guide b{font-family:'IM Fell English SC',Georgia,serif!important;color:#703d30!important;letter-spacing:.6px}
+#hud h1{font-size:22px}#room,#objective,#help,#inventory,#zoomStatus,#pbsPanel small,#zoomVolume{color:#332a20!important}
+#overlay,#plateZoom{background:#17160fe8!important}
+button,#targetBubble{font-family:'IM Fell English SC',Georgia,serif!important;font-size:16px;background:#aa8553!important;color:#201a15!important;border:2px solid #211b17!important;border-radius:3px 9px 4px 8px!important;box-shadow:3px 4px 0 #211b17!important;text-shadow:0 1px #e4c994;transition:transform .12s,filter .12s}
+button:hover,#targetBubble:hover{filter:brightness(1.15) contrast(1.1);transform:rotate(-1deg) translateY(-2px)}
+#cross{color:#f3dbab;text-shadow:-2px -2px #191511,2px 2px #191511;animation:inkTwitch 3.7s steps(2,end) infinite}
+#minimap{border:4px solid #2a2119;border-radius:3px;filter:sepia(.8) saturate(.65);box-shadow:3px 4px 0 #171310}
+#zoomPlate{border-color:#574835!important;background:linear-gradient(145deg,#e0cfac,#968367)!important;border-radius:7px 17px 5px 12px!important;box-shadow:inset 0 0 0 5px #2c241b,7px 8px 0 #201a16!important}
+.zoomWell{border-color:#574c3b!important;box-shadow:inset 0 7px 12px #241b1599,2px 3px 0 #201a16!important;filter:saturate(.68) sepia(.22)}
+.zoomWell:hover{outline-color:#d5a75c!important}
+#zoomTip{filter:sepia(.5) drop-shadow(3px 4px 0 #231b16)!important}
+#intro p{line-height:1.6}#intro p[style]{color:#65513d!important}
+@keyframes inkTwitch{0%,89%,100%{transform:translate(-50%,-50%) rotate(0deg)}90%{transform:translate(-50%,-50%) rotate(-7deg)}94%{transform:translate(-50%,-50%) rotate(5deg)}}
+@media(max-width:600px){#hud{max-width:240px;padding:12px}#hud h1{font-size:17px}#inventory{top:auto;bottom:60px;right:8px}#minimap{width:130px;height:90px}}
+</style>
+<script id="storybook-3d">
+(function(){
+ if(!window.THREE||typeof scene==='undefined')return;
+ const ink=0x211d19;
+ scene.background.set(0x888675);
+ if(scene.fog){scene.fog.color.set(0x888675);scene.fog.near=13;scene.fog.far=39}
+ // Muted, earthy colors and stepped lighting produce a painted, inked appearance.
+ const palette=[0xc3b595,0x978d75,0x807e6c,0xb5aa8d,0x777a6c,0x738d82,0x786b5b];
+ const toonGradient=new THREE.DataTexture(new Uint8Array([42,95,157,220,255]),5,1,THREE.RedFormat);
+ toonGradient.needsUpdate=true;toonGradient.magFilter=THREE.NearestFilter;toonGradient.minFilter=THREE.NearestFilter;
+ let outlined=0;const swaying=[];
+ scene.traverse(function(obj){
+  if(!obj.isMesh||!obj.geometry||!obj.material)return;
+  const material=obj.material;
+  if(material.isMeshStandardMaterial && !material.transparent){
+   const original=material.color.clone();
+   const hsl={};original.getHSL(hsl);
+   const tone=new THREE.Color();tone.setHSL((hsl.h*.60+.10)%1,Math.min(.32,hsl.s*.56+.07),Math.max(.25,Math.min(.78,hsl.l*.77+.08)));
+   obj.material=new THREE.MeshToonMaterial({color:tone,gradientMap:toonGradient,side:material.side});
+  }else if(material.isMeshStandardMaterial && material.transparent){material.roughness=1;material.metalness=0;material.color.lerp(new THREE.Color(0x9c967d),.27)}
+  // Edge ink on structural meshes, without interfering with picking or raycasts.
+  if(obj.geometry.type==='BoxGeometry' && outlined<420){
+   const edges=new THREE.LineSegments(new THREE.EdgesGeometry(obj.geometry,24),new THREE.LineBasicMaterial({color:ink,transparent:true,opacity:.83,depthWrite:false}));
+   edges.raycast=()=>{};edges.renderOrder=1;obj.add(edges);outlined++;
+  }
+  if(obj.geometry.type==='CylinderGeometry'&&outlined<420&&obj.geometry.parameters.height>.09){
+   const edges=new THREE.LineSegments(new THREE.EdgesGeometry(obj.geometry,32),new THREE.LineBasicMaterial({color:ink,transparent:true,opacity:.57,depthWrite:false}));
+   edges.raycast=()=>{};obj.add(edges);outlined++;
+  }
+ });
+ scene.traverse(o=>{if(o.isLight){if(o.isHemisphereLight){o.intensity=.95;o.color.set(0xf3dcad);o.groundColor.set(0x40382e)}else if(o.isDirectionalLight){o.intensity=2.1;o.color.set(0xf8d6a1)}else if(o.isPointLight){o.intensity*=.55;o.color.set(0xffd5a1)}}});
+ if(typeof renderer!=='undefined'){renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92}
+ // Animate only decorative labels: preserve clickable object positions and controls.
+ const labels=scene.children.filter(o=>o.isMesh&&o.geometry?.type==='PlaneGeometry'&&o.material?.map);
+ const originalRotations=labels.map(o=>o.rotation.z);
+ let previous=0;
+ function inkMotion(t){requestAnimationFrame(inkMotion);const sec=t*.001;if(sec-previous<.035)return;previous=sec;
+  labels.forEach((o,i)=>{o.rotation.z=originalRotations[i]+Math.sin(sec*1.45+i*2.3)*.009});
+ }
+ requestAnimationFrame(inkMotion);
+ const map=document.getElementById('minimap');if(map)map.style.imageRendering='auto';
+})();
+</script>
 </body></html>
