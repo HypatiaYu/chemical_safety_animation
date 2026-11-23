@@ -1,139 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Faucet + Shower Prototype — Full Lab Objects</title><style>
-*{box-sizing:border-box}body{margin:0;background:#07121c;color:#f0f7ff;font-family:system-ui,Arial;overflow:hidden}canvas{display:block}#hud{position:fixed;top:15px;left:15px;z-index:5;background:#0c2032dc;border:1px solid #4d8194;border-radius:14px;padding:15px;width:min(330px,calc(100vw - 30px));pointer-events:none}h1{font-size:18px;margin:0 0 6px;color:#9ff6d8}#room{font-weight:700}#objective{font-size:13px;color:#c6e1e8;margin-top:7px;line-height:1.45}#help{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:12px 18px;background:#071d2de6;border:1px solid #4b7788;border-radius:12px;text-align:center;font-size:13px;z-index:5;max-width:95vw}#cross{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:#fff9;text-shadow:0 1px 5px #000;pointer-events:none}#prompt{position:fixed;top:57%;left:50%;transform:translateX(-50%);font-weight:700;background:#123044d9;border-radius:9px;padding:8px 15px;display:none;white-space:nowrap}#overlay{position:fixed;inset:0;z-index:10;background:#051421e8;display:flex;justify-content:center;align-items:center;padding:20px}#intro{max-width:520px;background:#153247;border:1px solid #7db9b9;border-radius:18px;padding:30px;box-shadow:0 30px 100px #000a}#intro h2{color:#a8f3d8;margin-top:0}button{background:#6be0bc;color:#062c2d;border:0;border-radius:9px;padding:12px 19px;font-weight:800;cursor:pointer}button:hover{filter:brightness(1.1)}#notice{position:fixed;top:120px;right:18px;background:#153447ee;padding:12px;border-radius:10px;max-width:300px;display:none;z-index:7}#inventory{position:fixed;top:16px;right:15px;background:#102c3bdc;padding:11px;border:1px solid #527e91;border-radius:11px;font-size:13px;z-index:5}#minimap{position:fixed;right:15px;bottom:75px;width:180px;height:125px;border:1px solid #4d8194;border-radius:9px;background:#102331df;z-index:5}#fallback{display:none;position:fixed;inset:0;background:#0b1e2b;z-index:20;padding:40px;text-align:center}#guide{position:fixed;left:15px;bottom:78px;z-index:8;width:min(355px,calc(100vw - 30px));background:#102d40f5;border:2px solid #ffdb6d;border-radius:15px;padding:14px;box-shadow:0 8px 35px #0008}#guide b{color:#ffe58e}#guide p{margin:7px 0;font-size:13px;line-height:1.45}#guide button{padding:9px 12px;margin:3px;font-size:12px}#targetBubble{position:fixed;z-index:9;display:none;transform:translate(-50%,-50%);background:#ffdc63;color:#17202a;border:3px solid #fff4ba;border-radius:28px;padding:13px 18px;font-weight:900;box-shadow:0 0 0 8px #ffd35a44,0 0 28px #ffd35a;cursor:pointer;white-space:nowrap;animation:pulse 1.3s infinite alternate}@keyframes pulse{to{box-shadow:0 0 0 15px #ffd35a22,0 0 38px #ffd35a}}#targetBubble:hover{filter:brightness(1.15)}#hud{top:10px}#help{font-size:12px} #pbsPanel{position:fixed;right:15px;top:84px;z-index:6;width:225px;background:#102b3deF;border:1px solid #83d7ee;border-radius:13px;padding:10px 12px;display:none;box-shadow:0 7px 25px #0007}#pbsPanel strong{font-size:13px;color:#b8f1ff}#pbsPanel small{display:block;color:#b5d5df;font-size:11px;margin-top:3px}#pbsGauge{display:block;margin:auto;width:95px;height:180px}#pbsFluid{transition:y .35s,height .35s}#pbsFlow{opacity:0;transition:opacity .2s}#pbsPanel.filling #pbsFlow{opacity:1;animation:pbsDrop .65s ease-in-out 2}#pbsPanel.filling #pbsFluid{transition:height .9s,y .9s}@keyframes pbsDrop{0%{transform:translateY(-12px);opacity:0}50%{opacity:1}100%{transform:translateY(25px);opacity:0}}#guide,#targetBubble,#pbsPanel{display:none!important}</style><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
-</head><body>
-<div id="characterLoadStatus" style="position:fixed;top:65px;left:50%;transform:translateX(-50%);z-index:9;background:#20384f;color:#fff;padding:9px 15px;border-radius:10px;font:600 13px system-ui;pointer-events:none">Loading scientist GLB…</div><div id="hud"><h1>🧬 WESTERN BLOT · 3D LAB</h1><div id="room">Tissue culture room</div><div id="objective">Explore the tissue culture room. Open the reagent fridge and inspect the cell incubator.</div></div><div id="inventory">🖐️ Holding: <span id="held">Nothing</span></div><div id="cross">+</div><div id="pbsPanel" aria-live="polite"><strong>🧪 10 mL sterile serological pipette</strong><svg id="pbsGauge" viewBox="0 0 110 180" role="img" aria-label="PBS liquid level in pipette"><defs><clipPath id="pipetteClip"><rect x="42" y="17" width="27" height="125" rx="10"/></clipPath></defs><rect x="40" y="14" width="31" height="132" rx="12" fill="#e7faff" fill-opacity=".22" stroke="#b5e9f7" stroke-width="3"/><g clip-path="url(#pipetteClip)"><rect id="pbsFluid" x="42" y="142" width="27" height="0" fill="#3bb7ee" opacity=".9"/></g><path d="M48 146 L48 167 L62 167 L62 146" fill="none" stroke="#b5e9f7" stroke-width="3"/><g stroke="#d6f7ff" stroke-width="1.4"><path d="M43 28 h12"/><path d="M43 39 h7"/><path d="M43 50 h12"/><path d="M43 61 h7"/><path d="M43 72 h12"/><path d="M43 83 h7"/><path d="M43 94 h12"/><path d="M43 105 h7"/><path d="M43 116 h12"/><path d="M43 127 h7"/></g><g id="pbsFlow"><path d="M55 0 L55 17" stroke="#35c7f5" stroke-width="5" stroke-linecap="round"/><circle cx="55" cy="10" r="5" fill="#35c7f5"/></g></svg><strong id="pbsVolume">0.00 / 10.00 mL</strong><small id="pbsProgress">Fill once, then dispense into 24 wells.</small></div><div id="prompt"></div><div id="notice"></div><canvas id="minimap" width="360" height="250"></canvas><div id="guide"><b id="guideTitle">GUIDED WESTERN BLOT · 1 / 5</b><p id="guideText">Open the incubator, then pick up the culture plate inside.</p><button id="findTarget">🎯 Show me where</button><button id="skipTarget">Skip step →</button></div><button id="targetBubble" type="button">👆 Click here</button><div id="help">WASD move · Drag to look · Explore the central chemistry lab bench</div><div id="overlay"><div id="intro"><h2>Explore your interactive 3D laboratory</h2><p>Explore a chemistry laboratory with a central island bench and a scientist standing in front of it.</p><p>Move the mouse to look in any direction. Explore the central chemistry workbench, white countertops, wood drawer cabinets, and overhead utility shelves. Click “Show me where” to face the next object. Drag your mouse to rotate the camera. Open the fridge, click a reagent bottle to pick it up, walk to a bench, and click a glowing pad to place it. The laboratory is an educational model, not an operating protocol.</p><button id="start">ENTER LAB</button><p style="font-size:12px;color:#b5d3dd">Requires an internet connection for the 3D engine. Keep the scientist GLB in the same folder and open via a local web server.</p></div></div><div id="fallback">Unable to load the 3D engine. Check your internet connection and reopen this file.</div>
-
-
-<style>
-#plateZoom{position:fixed;inset:0;z-index:12;background:#061623ee;display:none;align-items:center;justify-content:center;padding:16px;overflow:auto}
-#zoomCard{width:min(1050px,97vw);background:#122d40;border:2px solid #8ad2e5;border-radius:20px;padding:18px;box-shadow:0 15px 60px #000a}
-#zoomHead{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
-#zoomHead h2{margin:0;color:#b8f5ed;font-size:20px}
-#zoomHead button{padding:10px 13px}
-#zoomStatus{margin:12px 0;color:#ccebf4;font-size:14px}
-#zoomPlate{position:relative;margin:14px auto 10px;width:min(780px,90vw);aspect-ratio:1.7;background:linear-gradient(140deg,#f8ffffed,#b9d5e3e8);border:16px solid #eaf9fc;border-radius:30px;box-shadow:inset 0 0 0 5px #91b4c5,0 12px 30px #0009;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:clamp(5px,1.5vw,17px);padding:clamp(12px,2.5vw,30px);cursor:none}
-.zoomWell{position:relative;min-width:0;border-radius:50%;border:clamp(4px,.8vw,9px) solid #dcecf4;box-shadow:inset 0 8px 15px #15364c99,0 3px 5px #55768c;cursor:none;background:radial-gradient(ellipse at 45% 60%,#e1a6d4 0%,#bb70ad 55%,#7d467d 95%);transition:background .2s,transform .15s}
-.zoomWell:hover{outline:5px solid #ffce46;transform:scale(1.035)}
-.zoomWell.empty{background:radial-gradient(ellipse at 45% 60%,#a1b8c9 0%,#698ba4 80%)}
-.zoomWell.pbs{background:radial-gradient(ellipse at 45% 60%,#c4f4ff 0%,#63bddf 80%)}
-.zoomWell::after{content:attr(data-well);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#183747;font-size:clamp(10px,1.2vw,16px);font-weight:900;pointer-events:none}
-#zoomTip{position:absolute;z-index:4;pointer-events:none;left:50%;top:30%;transform:translate(-50%,-100%);filter:drop-shadow(1px 4px 3px #0007)}
-#zoomTip .shaft{width:13px;height:94px;margin:auto;border:2px solid #718b9b;border-radius:6px 6px 2px 2px;background:linear-gradient(90deg,#eefaff,#a7d4e6,#fff);position:relative;overflow:hidden}
-#zoomTip .fluid{position:absolute;bottom:0;left:2px;right:2px;height:0;background:#62c9ec;transition:height .25s}
-#zoomTip .point{margin:auto;width:6px;height:36px;background:linear-gradient(90deg,#a7d0e2,#fff);clip-path:polygon(0 0,100% 0,55% 100%,45% 100%)}
-#zoomActions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
-#zoomActions button{font-size:14px}
-#zoomVolume{font-weight:800;color:#b4f3ff}
-</style>
-<div id="plateZoom" aria-label="Magnified 24-well plate work area"><div id="zoomCard"><div id="zoomHead"><h2>🔬 Close-up: 24-well culture plate</h2><button id="zoomClose">Return to 3D room</button></div><div id="zoomStatus">Move the tip over a well and click.</div><div id="zoomPlate"><div id="zoomTip"><div class="shaft"><div class="fluid" id="zoomTipFluid"></div></div><div class="point"></div></div></div><div id="zoomActions"><button id="zoomLoad">Draw 10 mL PBS from bottle</button><button id="zoomReturn">Put tool back (G)</button><span id="zoomVolume"></span></div><p style="text-align:center;color:#b6d1dd;font-size:12px;margin-bottom:0">Enlarged work view for accurate targeting · Game simulation · 10 mL divided across 24 wells</p></div></div>
-
-
-<style>
-#lysisOverlay{position:fixed;inset:0;z-index:120;background:#04131de9;display:none;align-items:center;justify-content:center;padding:18px;color:#eafaff;font-family:system-ui}
-#lysisCard{width:min(850px,96vw);max-height:94vh;overflow:auto;background:#122b3c;border:2px solid #73c6d5;border-radius:20px;padding:20px;box-shadow:0 20px 80px #000a}
-#lysisCard button{background:#236c8d;color:white;border:1px solid #85d6ef;padding:11px 14px;border-radius:9px;cursor:pointer;font-weight:700;margin:5px}
-#lysisCard button:disabled{opacity:.38;cursor:not-allowed}
-#lysisGrid{display:grid;grid-template-columns:repeat(6,minmax(35px,1fr));gap:8px;margin:14px auto;max-width:650px}
-.lysisWell{aspect-ratio:1;border:5px solid #d3e9ed;border-radius:50%;background:#9bd8e7;display:flex;align-items:center;justify-content:center;color:#123e52;cursor:pointer;font-weight:800;box-shadow:inset 0 5px 10px #16465a55}
-.lysisWell.done{background:#745d9d;color:white}.lysisWell:hover{outline:3px solid #f9df6a}
-#lysisBar{height:16px;border-radius:20px;border:1px solid #9ad6ed;background:#1d4256;overflow:hidden;margin-top:8px}
-#lysisFill{height:100%;width:0%;background:linear-gradient(90deg,#a37fe4,#e7a4ff);transition:width .25s}
-</style>
-<div id="lysisOverlay"><div id="lysisCard">
-<h2>🧪 Next step: Laemmli buffer and cell lysis</h2>
-<p id="lysisInstruction">Return the PBS pipette, then collect a new transfer pipette and the Laemmli buffer bottle.</p>
-<div><button id="lysisFresh">1 · Get a fresh pipette</button><button id="lysisAttach" disabled>2 · Attach to controller</button><button id="lysisDraw" disabled>3 · Draw Laemmli buffer</button><button id="lysisBack">Return to lab</button></div>
-<p id="lysisMeter">Buffer in pipette: 0.00 mL · Wells treated: 0 / 24</p><div id="lysisBar"><div id="lysisFill"></div></div>
-<div id="lysisGrid"></div><p style="font-size:12px;color:#b7d2df">Educational game representation: the source protocol describes solubilizing collected cell pellets in 200 µL Laemmli buffer with fresh β-mercaptoethanol and protease inhibitors, not adding buffer directly to 24 culture wells. The 24-well action here is a requested gameplay simplification.</p>
-</div></div>
-
-
-
-
-
-
-<style>
-/* Arcade fighting-game inspired health display, above all 3D fire effects. */
-#scientistHealth{position:fixed;top:16px;right:18px;left:auto;z-index:105;width:min(520px,calc(100vw - 36px));pointer-events:none;display:flex;filter:drop-shadow(0 4px 7px #000e);font-family:Impact,'Arial Black',system-ui,sans-serif}
-#scientistHealth .healthTitle{font-size:17px;letter-spacing:1.3px;color:#f6ffff;text-align:left;text-shadow:2px 2px #000,-1px -1px #183e50;padding:0 8px 5px;background:none}
-#scientistHealth .healthTrack{height:33px;background:linear-gradient(#270b13,#5b1018 45%,#29060b);border:3px solid #161c24;border-radius:10px 7px 14px 9px;overflow:hidden;position:relative;box-shadow:0 0 0 2px #b8c4a4,0 0 0 4px #293c42,inset 0 2px 6px #000c,0 3px 9px #000c;transform:skewX(-7deg)}
-#scientistHealth .healthFill{height:100%;width:100%;background:linear-gradient(to bottom,#ffff9e 0%,#fff934 20%,#ffe500 48%,#e5b900 79%,#9b8b16 100%);box-shadow:inset 0 2px 1px #ffffc9,inset 0 -3px 3px #a87500;transform-origin:left;transition:width .05s linear;position:relative}
-#scientistHealth .healthFill:after{content:'';position:absolute;inset:2px 0 auto;height:5px;background:#fff9a7aa;border-radius:5px}
-#scientistHealth .healthNumber{position:absolute;inset:0;text-align:center;font:bold 16px/27px Impact,'Arial Black',system-ui,sans-serif;color:#fff;text-shadow:2px 2px 2px #000,-1px -1px #000;transform:skewX(7deg)}
-#scientistHealth .healthWarning{font:bold 13px Impact,'Arial Black',system-ui,sans-serif;letter-spacing:1px;color:#ffdbca;text-align:left;text-shadow:2px 2px 3px #000;margin:8px 0 0 7px}
-#scientistHealth.critical .healthTrack{animation:healthPulse .35s infinite alternate;box-shadow:0 0 0 2px #ffaaa2,0 0 0 4px #7c1921,0 0 20px #ff2419}
-@keyframes healthPulse{to{filter:brightness(1.45)}}
-#fireGameOver{display:none;position:fixed;inset:0;z-index:110;background:#10090bdc;align-items:center;justify-content:center;text-align:center;padding:24px}
-#fireGameOver .gameOverCard{background:#25171c;border:2px solid #ff5a4e;border-radius:18px;padding:30px;max-width:460px;color:white;box-shadow:0 12px 55px #000c}
-#fireGameOver h2{font-size:38px;color:#ff7164;margin:0 0 10px}
-#scientistHealth{align-items:center;gap:12px;padding:10px 13px;background:linear-gradient(115deg,#0b1a2cf2,#1c3445ed);border:2px solid #9aaeb5;border-radius:12px;box-shadow:0 8px 25px #000b;}
-#scientistHealth .healthPortrait{width:76px;height:84px;flex:none;border:3px solid #d2b95d;border-radius:8px;overflow:hidden;box-shadow:0 0 0 2px #263e49,inset 0 0 8px #000;}
-#scientistHealth .healthPortrait svg{width:100%;height:100%;display:block}
-#scientistHealth .healthDetails{flex:1;min-width:0}
-#scientistHealth .healthTitle{font-size:18px;padding:0 0 9px;display:flex;align-items:center;justify-content:space-between;gap:6px}
-#scientistHealth .healthTag{font:700 11px system-ui,sans-serif;color:#9af8dc}
-#scientistHealth .healthTrack{height:34px}
-@media(max-width:620px){#scientistHealth{top:8px;right:8px;width:min(310px,calc(100vw - 16px));padding:7px;gap:7px}#scientistHealth .healthPortrait{width:51px;height:62px}#scientistHealth .healthTitle{font-size:13px;padding-bottom:5px}#scientistHealth .healthTrack{height:27px}#scientistHealth .healthNumber{font-size:13px;line-height:21px}#scientistHealth .healthWarning{font-size:10px;margin-top:5px}}
-</style>
-<div id="scientistHealth" aria-label="Scientist health meter"><div class="healthPortrait"><svg viewBox="0 0 90 100" role="img" aria-label="Scientist portrait" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="portraitBg" x2="1" y2="1"><stop stop-color="#244d66"/><stop offset="1" stop-color="#071622"/></linearGradient></defs><rect width="90" height="100" rx="8" fill="url(#portraitBg)"/><path d="M7 100 Q10 68 29 65 L61 65 Q81 68 85 100" fill="#f1f5f8" stroke="#a3c8da" stroke-width="2"/><path d="M29 66 L44 90 L61 66 L53 100 L36 100Z" fill="#b4d6e5"/><path d="M39 65 L45 76 L51 65" fill="#283d50"/><rect x="39" y="56" width="13" height="14" rx="5" fill="#dba67e"/><ellipse cx="45" cy="37" rx="23" ry="29" fill="#e7b28a"/><path d="M22 40 Q14 3 45 7 Q75 2 69 41 L62 25 Q45 34 27 24Z" fill="#2a2a31"/><path d="M30 40 h11 m8 0 h11" stroke="#293c47" stroke-width="2.5"/><path d="M43 39 h5" stroke="#293c47" stroke-width="2"/><path d="M40 54 Q45 58 51 54" fill="none" stroke="#9b5749" stroke-width="2"/><path d="M10 100 Q10 82 20 74" stroke="#ffb039" stroke-width="4" opacity=".8"/></svg></div><div class="healthDetails"><div class="healthTitle">SCIENTIST <span class="healthTag">PLAYER 1</span></div><div class="healthTrack"><div class="healthFill" id="scientistHealthFill"></div><div class="healthNumber" id="scientistHealthNumber">100%</div></div><div class="healthWarning" id="scientistHealthWarning">FIRE DAMAGE!</div></div></div>
-<div id="fireGameOver"><div class="gameOverCard"><h2>GAME OVER</h2><p>The scientist's health reached zero.</p><p>The scientist collapsed before the fire could be extinguished.</p><button id="restartFireGame">TRY AGAIN</button></div></div>
-<style>
-#fireVictory{display:none;position:fixed;inset:0;z-index:100000;background:radial-gradient(ellipse at center,#17495d 0%,#091b32 55%,#050c1c 100%);align-items:center;justify-content:center;text-align:center;color:#f7fcff;font-family:system-ui,Arial,sans-serif;overflow:hidden}
-#fireVictory.active{display:flex;animation:victoryReveal .85s ease-out both}
-#fireVictory .victoryCard{position:relative;z-index:2;max-width:680px;padding:38px 28px}
-#fireVictory .victoryIcon{font-size:70px;filter:drop-shadow(0 0 20px #ffda73)}
-#fireVictory h2{font-size:clamp(42px,7vw,85px);margin:12px 0;color:#ffe389;letter-spacing:.07em;text-shadow:0 4px 0 #835727,0 0 35px #ffcf6380}
-#fireVictory p{font-size:clamp(18px,2.5vw,25px);margin:10px 0 25px}
-#fireVictory .victorySub{color:#a8e9ec;font-size:17px}
-#fireVictory button{margin:9px;padding:13px 20px;border:0;border-radius:10px;background:#ffe08a;color:#132e39;font-weight:800;cursor:pointer}
-#fireVictory button.secondary{background:#2d6075;color:white;border:1px solid #7cc5d6}
-#fireVictory .spark{position:absolute;width:9px;height:9px;background:#ffe28e;transform:rotate(45deg);opacity:.8;animation:victorySpark 3s ease-in-out infinite alternate}
-@keyframes victoryReveal{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:scale(1)}}
-@keyframes victorySpark{from{transform:translateY(25px) rotate(0deg);opacity:.15}to{transform:translateY(-70px) rotate(180deg);opacity:1}}
-</style>
-<div id="fireVictory" role="dialog" aria-modal="true" aria-labelledby="victoryTitle"><div class="victoryCard"><div class="victoryIcon">🏆</div><h2 id="victoryTitle">VICTORY!</h2><p>🔥 FIRE EXTINGUISHED! 🚿</p><div class="victorySub">You activated the emergency shower and saved the laboratory.</div><div><button id="victoryReplayMusic">♪ Replay victory fanfare</button><button class="secondary" id="victoryRestart">Play again</button></div></div></div>
-
-
-
-
-<style>
-#showerFixPanel{display:none!important;position:fixed;top:155px;left:115px;z-index:10000;background:#102b3f;color:#fff;border:2px solid #61e8c0;border-radius:12px;padding:12px;font:13px system-ui;max-width:370px;box-shadow:0 4px 20px #0008}
-#showerFixPanel button{background:#69e6bd;color:#092e2b;font-weight:bold;border:0;border-radius:7px;padding:11px 14px;margin:5px;cursor:pointer}
-#showerFixStatus{display:block;margin-top:6px;color:#fff4b8;overflow-wrap:anywhere}
-</style>
-<div id="showerFixPanel"><strong>🚿 SHOWER CONTROL — FIRE FADE</strong><div><button type="button" id="showerFixToggle">SHOWER OFF — TURN ON</button><button type="button" id="showerFixGo">GO TO SHOWER</button></div><span id="showerFixStatus">Initializing…</span></div>
-
-
-<!-- Ink-and-parchment storybook visual treatment -->
-<style id="storybook-style">
-@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Special+Elite&display=swap');
-:root{--paper:#dfcfaa;--ink:#201c1a;--ochre:#a17c48;--blood:#8b3e35}
-body{background:#272820;color:var(--paper);font-family:'Special Elite',Georgia,serif}
-body:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:4;background:repeating-linear-gradient(13deg,transparent 0 5px,#1d171009 6px 7px),radial-gradient(ellipse at center,transparent 37%,#100e0a8a 100%);mix-blend-mode:multiply}
-#hud,#help,#inventory,#prompt,#notice,#pbsPanel,#guide,#intro,#zoomCard{background:#d7c49e!important;color:#28221c!important;border:3px solid #241d19!important;border-radius:3px 12px 4px 10px!important;box-shadow:4px 5px 0 #1b1715,0 12px 30px #0009!important;outline:1px dashed #665238;outline-offset:-8px}
-#hud h1,#intro h2,#zoomHead h2,#pbsPanel strong,#guide b{font-family:'IM Fell English SC',Georgia,serif!important;color:#703d30!important;letter-spacing:.6px}
-#hud h1{font-size:22px}#room,#objective,#help,#inventory,#zoomStatus,#pbsPanel small,#zoomVolume{color:#332a20!important}
-#overlay,#plateZoom{background:#17160fe8!important}
-button,#targetBubble{font-family:'IM Fell English SC',Georgia,serif!important;font-size:16px;background:#aa8553!important;color:#201a15!important;border:2px solid #211b17!important;border-radius:3px 9px 4px 8px!important;box-shadow:3px 4px 0 #211b17!important;text-shadow:0 1px #e4c994;transition:transform .12s,filter .12s}
-button:hover,#targetBubble:hover{filter:brightness(1.15) contrast(1.1);transform:rotate(-1deg) translateY(-2px)}
-#cross{color:#f3dbab;text-shadow:-2px -2px #191511,2px 2px #191511;animation:inkTwitch 3.7s steps(2,end) infinite}
-#minimap{border:4px solid #2a2119;border-radius:3px;filter:sepia(.8) saturate(.65);box-shadow:3px 4px 0 #171310}
-#zoomPlate{border-color:#574835!important;background:linear-gradient(145deg,#e0cfac,#968367)!important;border-radius:7px 17px 5px 12px!important;box-shadow:inset 0 0 0 5px #2c241b,7px 8px 0 #201a16!important}
-.zoomWell{border-color:#574c3b!important;box-shadow:inset 0 7px 12px #241b1599,2px 3px 0 #201a16!important;filter:saturate(.68) sepia(.22)}
-.zoomWell:hover{outline-color:#d5a75c!important}
-#zoomTip{filter:sepia(.5) drop-shadow(3px 4px 0 #231b16)!important}
-#intro p{line-height:1.6}#intro p[style]{color:#65513d!important}
-@keyframes inkTwitch{0%,89%,100%{transform:translate(-50%,-50%) rotate(0deg)}90%{transform:translate(-50%,-50%) rotate(-7deg)}94%{transform:translate(-50%,-50%) rotate(5deg)}}
-@media(max-width:600px){#hud{max-width:240px;padding:12px}#hud h1{font-size:17px}#inventory{top:auto;bottom:60px;right:8px}#minimap{width:130px;height:90px}}
-</style>
-
-<script type="module">
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-window.THREE = THREE;
-
-;
-
+*{box-sizing:border-box}body{margin:0;background:#07121c;color:#f0f7ff;font-family:system-ui,Arial;overflow:hidden}canvas{display:block}#hud{position:fixed;top:15px;left:15px;z-index:5;background:#0c2032dc;border:1px solid #4d8194;border-radius:14px;padding:15px;width:min(330px,calc(100vw - 30px));pointer-events:none}h1{font-size:18px;margin:0 0 6px;color:#9ff6d8}#room{font-weight:700}#objective{font-size:13px;color:#c6e1e8;margin-top:7px;line-height:1.45}#help{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:12px 18px;background:#071d2de6;border:1px solid #4b7788;border-radius:12px;text-align:center;font-size:13px;z-index:5;max-width:95vw}#cross{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:#fff9;text-shadow:0 1px 5px #000;pointer-events:none}#prompt{position:fixed;top:57%;left:50%;transform:translateX(-50%);font-weight:700;background:#123044d9;border-radius:9px;padding:8px 15px;display:none;white-space:nowrap}#overlay{position:fixed;inset:0;z-index:10;background:#051421e8;display:flex;justify-content:center;align-items:center;padding:20px}#intro{max-width:520px;background:#153247;border:1px solid #7db9b9;border-radius:18px;padding:30px;box-shadow:0 30px 100px #000a}#intro h2{color:#a8f3d8;margin-top:0}button{background:#6be0bc;color:#062c2d;border:0;border-radius:9px;padding:12px 19px;font-weight:800;cursor:pointer}button:hover{filter:brightness(1.1)}#notice{position:fixed;top:120px;right:18px;background:#153447ee;padding:12px;border-radius:10px;max-width:300px;display:none;z-index:7}#inventory{position:fixed;top:16px;right:15px;background:#102c3bdc;padding:11px;border:1px solid #527e91;border-radius:11px;font-size:13px;z-index:5}#minimap{position:fixed;right:15px;bottom:75px;width:180px;height:125px;border:1px solid #4d8194;border-radius:9px;background:#102331df;z-index:5}#fallback{display:none;position:fixed;inset:0;background:#0b1e2b;z-index:20;padding:40px;text-align:center}#guide{position:fixed;left:15px;bottom:78px;z-index:8;width:min(355px,calc(100vw - 30px));background:#102d40f5;border:2px solid #ffdb6d;border-radius:15px;padding:14px;box-shadow:0 8px 35px #0008}#guide b{color:#ffe58e}#guide p{margin:7px 0;font-size:13px;line-height:1.45}#guide button{padding:9px 12px;margin:3px;font-size:12px}#targetBubble{position:fixed;z-index:9;display:none;transform:translate(-50%,-50%);background:#ffdc63;color:#17202a;border:3px solid #fff4ba;border-radius:28px;padding:13px 18px;font-weight:900;box-shadow:0 0 0 8px #ffd35a44,0 0 28px #ffd35a;cursor:pointer;white-space:nowrap;animation:pulse 1.3s infinite alternate}@keyframes pulse{to{box-shadow:0 0 0 15px #ffd35a22,0 0 38px #ffd35a}}#targetBubble:hover{filter:brightness(1.15)}#hud{top:10px}#help{font-size:12px} #pbsPanel{position:fixed;right:15px;top:84px;z-index:6;width:225px;background:#102b3deF;border:1px solid #83d7ee;border-radius:13px;padding:10px 12px;display:none;box-shadow:0 7px 25px #0007}#pbsPanel strong{font-size:13px;color:#b8f1ff}#pbsPanel small{display:block;color:#b5d5df;font-size:11px;margin-top:3px}#pbsGauge{display:block;margin:auto;width:95px;height:180px}#pbsFluid{transition:y .35s,height .35s}#pbsFlow{opacity:0;transition:opacity .2s}#pbsPanel.filling #pbsFlow{opacity:1;animation:pbsDrop .65s ease-in-out 2}#pbsPanel.filling #pbsFluid{transition:height .9s,y .9s}@keyframes pbsDrop{0%{transform:translateY(-12px);opacity:0}50%{opacity:1}100%{transform:translateY(25px);opacity:0}}#guide,#targetBubble,#pbsPanel{display:none!important}</style></head><body>
+<div id="hud"><h1>🧬 WESTERN BLOT · 3D LAB</h1><div id="room">Tissue culture room</div><div id="objective">Explore the tissue culture room. Open the reagent fridge and inspect the cell incubator.</div></div><div id="inventory">🖐️ Holding: <span id="held">Nothing</span></div><div id="cross">+</div><div id="pbsPanel" aria-live="polite"><strong>🧪 10 mL sterile serological pipette</strong><svg id="pbsGauge" viewBox="0 0 110 180" role="img" aria-label="PBS liquid level in pipette"><defs><clipPath id="pipetteClip"><rect x="42" y="17" width="27" height="125" rx="10"/></clipPath></defs><rect x="40" y="14" width="31" height="132" rx="12" fill="#e7faff" fill-opacity=".22" stroke="#b5e9f7" stroke-width="3"/><g clip-path="url(#pipetteClip)"><rect id="pbsFluid" x="42" y="142" width="27" height="0" fill="#3bb7ee" opacity=".9"/></g><path d="M48 146 L48 167 L62 167 L62 146" fill="none" stroke="#b5e9f7" stroke-width="3"/><g stroke="#d6f7ff" stroke-width="1.4"><path d="M43 28 h12"/><path d="M43 39 h7"/><path d="M43 50 h12"/><path d="M43 61 h7"/><path d="M43 72 h12"/><path d="M43 83 h7"/><path d="M43 94 h12"/><path d="M43 105 h7"/><path d="M43 116 h12"/><path d="M43 127 h7"/></g><g id="pbsFlow"><path d="M55 0 L55 17" stroke="#35c7f5" stroke-width="5" stroke-linecap="round"/><circle cx="55" cy="10" r="5" fill="#35c7f5"/></g></svg><strong id="pbsVolume">0.00 / 10.00 mL</strong><small id="pbsProgress">Fill once, then dispense into 24 wells.</small></div><div id="prompt"></div><div id="notice"></div><canvas id="minimap" width="360" height="250"></canvas><div id="guide"><b id="guideTitle">GUIDED WESTERN BLOT · 1 / 5</b><p id="guideText">Open the incubator, then pick up the culture plate inside.</p><button id="findTarget">🎯 Show me where</button><button id="skipTarget">Skip step →</button></div><button id="targetBubble" type="button">👆 Click here</button><div id="help">WASD move · Drag to look · Explore the central chemistry lab bench</div><div id="overlay"><div id="intro"><h2>Explore your interactive 3D laboratory</h2><p>Explore a chemistry laboratory with a central island bench and a scientist standing in front of it.</p><p>Move the mouse to look in any direction. Explore the central chemistry workbench, white countertops, wood drawer cabinets, and overhead utility shelves. Click “Show me where” to face the next object. Drag your mouse to rotate the camera. Open the fridge, click a reagent bottle to pick it up, walk to a bench, and click a glowing pad to place it. The laboratory is an educational model, not an operating protocol.</p><button id="start">ENTER LAB</button><p style="font-size:12px;color:#b5d3dd">Requires an internet connection to load the 3D rendering library.</p></div></div><div id="fallback">Unable to load the 3D engine. Check your internet connection and reopen this file.</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script><script>
 if(!window.THREE){document.getElementById('fallback').style.display='block';throw Error('Three.js not loaded')}
 const T=THREE, scene=new T.Scene();scene.background=new T.Color('#9cb4c0');scene.fog=new T.Fog('#9cb4c0',22,48);const camera=new T.PerspectiveCamera(74,innerWidth/innerHeight,.07,90);camera.position.set(-7.2,1.65,0.65);const renderer=new T.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;document.body.prepend(renderer.domElement);scene.add(new T.HemisphereLight(0xe7f6ff,0x64717a,2));const sun=new T.DirectionalLight(0xffffff,2.1);sun.position.set(-3,11,5);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
 const mats={floor:0xc6d9df,wall:0xe4eef1,trim:0x8aa6b4,bench:0xe2e9ed,steel:0x8a9da8,glass:0x80d5df,blue:0x316a91,navy:0x274354,black:0x27353c,white:0xf7f8f5,green:0x6dc4a4,orange:0xf1bd67,red:0xc56b73,liquid:0xd4a4da};function mat(c,opacity=1){return new T.MeshStandardMaterial({color:c,roughness:.55,metalness:.06,transparent:opacity<1,opacity})}function box(w,h,d,x,y,z,c,parent=scene){let m=new T.Mesh(new T.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}function cyl(r1,r2,h,x,y,z,c,parent=scene,n=18){let m=new T.Mesh(new T.CylinderGeometry(r1,r2,h,n),mat(c));m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m}function label(text,x,y,z,scale=.2,rot=0){const cv=document.createElement('canvas');cv.width=512;cv.height=100;let c=cv.getContext('2d');c.fillStyle='#173549';c.fillRect(0,0,512,100);c.fillStyle='#f2f9ff';c.font='bold 37px Arial';c.textAlign='center';c.fillText(text,256,62);let t=new T.Mesh(new T.PlaneGeometry(scale*5.12,scale),new T.MeshBasicMaterial({map:new T.CanvasTexture(cv),side:T.DoubleSide}));t.position.set(x,y,z);t.rotation.y=rot;scene.add(t)}
@@ -411,9 +279,30 @@ function nearest(){let best=null,bd=2.1;for(let a of interactions){let d=camera.
 interactions=interactions.filter(a=>!['Centrifuge','Eppendorf-style microcentrifuge tube','Pipette rack','Gel electrophoresis tank','Membrane transfer station','Blot imager'].includes(a.name));
 const map=document.getElementById('minimap'),ctx=map.getContext('2d');function drawMap(){ctx.clearRect(0,0,360,250);ctx.fillStyle='#173547';ctx.fillRect(0,0,360,250);ctx.strokeStyle='#a5d6e1';ctx.lineWidth=4;ctx.strokeRect(8,8,344,234);ctx.beginPath();ctx.moveTo(180,8);ctx.lineTo(180,82);ctx.moveTo(180,168);ctx.lineTo(180,242);ctx.stroke();ctx.fillStyle='#e0f4fa';ctx.font='bold 17px Arial';ctx.fillText('CULTURE',36,30);ctx.fillText('BENCH',225,30);ctx.fillStyle='#65eac1';ctx.beginPath();ctx.arc(180+(camera.position.x/20)*344,125+(camera.position.z/12)*234,7,0,Math.PI*2);ctx.fill()}
 const clock=new T.Clock();function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;if(started){let speed=(keys.ShiftLeft?5.3:3)*dt;let forward=new T.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));let right=new T.Vector3(Math.cos(yaw),0,-Math.sin(yaw));let mv=new T.Vector3();if(keys.KeyW||keys.ArrowUp)mv.add(forward);if(keys.KeyS||keys.ArrowDown)mv.sub(forward);if(keys.KeyD)mv.add(right);if(keys.KeyA)mv.sub(right);if(mv.lengthSq())mv.normalize().multiplyScalar(speed);let next=camera.position.clone().add(mv);next.x=Math.max(-9.5,Math.min(9.5,next.x));next.z=Math.max(-5.4,Math.min(5.4,next.z));if((camera.position.x<-.42&&next.x>=-.42||camera.position.x>.42&&next.x<=.42)&&Math.abs(next.z)>2.1)next.x=camera.position.x;if(Math.abs(next.x)<.43&&Math.abs(next.z)>2.12)next.x=camera.position.x;camera.position.copy(next);camera.position.y=1.65;document.getElementById('room').textContent=camera.position.x<0?'🧫 Tissue culture room':'🧪 Western blot bench room';updateHover();if(aspiratorHeld)aimAspirator();if(washPipetteHeld)aimWashPipette();if(held&&carryMesh){let p=new T.Vector3(.38,-.36,-.8).applyQuaternion(camera.quaternion).add(camera.position);carryMesh.position.copy(p);carryMesh.rotation.y=yaw}for(const a of placementPads){const active=!!held&&a.accept.includes(held);a.group.visible=active;a.ring.rotation.z+=dt*.8}drawMap()}renderer.render(scene,camera)}animate();window.onresize=()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)};
-
-;
-
+</script>
+<style>
+#plateZoom{position:fixed;inset:0;z-index:12;background:#061623ee;display:none;align-items:center;justify-content:center;padding:16px;overflow:auto}
+#zoomCard{width:min(1050px,97vw);background:#122d40;border:2px solid #8ad2e5;border-radius:20px;padding:18px;box-shadow:0 15px 60px #000a}
+#zoomHead{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+#zoomHead h2{margin:0;color:#b8f5ed;font-size:20px}
+#zoomHead button{padding:10px 13px}
+#zoomStatus{margin:12px 0;color:#ccebf4;font-size:14px}
+#zoomPlate{position:relative;margin:14px auto 10px;width:min(780px,90vw);aspect-ratio:1.7;background:linear-gradient(140deg,#f8ffffed,#b9d5e3e8);border:16px solid #eaf9fc;border-radius:30px;box-shadow:inset 0 0 0 5px #91b4c5,0 12px 30px #0009;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:clamp(5px,1.5vw,17px);padding:clamp(12px,2.5vw,30px);cursor:none}
+.zoomWell{position:relative;min-width:0;border-radius:50%;border:clamp(4px,.8vw,9px) solid #dcecf4;box-shadow:inset 0 8px 15px #15364c99,0 3px 5px #55768c;cursor:none;background:radial-gradient(ellipse at 45% 60%,#e1a6d4 0%,#bb70ad 55%,#7d467d 95%);transition:background .2s,transform .15s}
+.zoomWell:hover{outline:5px solid #ffce46;transform:scale(1.035)}
+.zoomWell.empty{background:radial-gradient(ellipse at 45% 60%,#a1b8c9 0%,#698ba4 80%)}
+.zoomWell.pbs{background:radial-gradient(ellipse at 45% 60%,#c4f4ff 0%,#63bddf 80%)}
+.zoomWell::after{content:attr(data-well);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#183747;font-size:clamp(10px,1.2vw,16px);font-weight:900;pointer-events:none}
+#zoomTip{position:absolute;z-index:4;pointer-events:none;left:50%;top:30%;transform:translate(-50%,-100%);filter:drop-shadow(1px 4px 3px #0007)}
+#zoomTip .shaft{width:13px;height:94px;margin:auto;border:2px solid #718b9b;border-radius:6px 6px 2px 2px;background:linear-gradient(90deg,#eefaff,#a7d4e6,#fff);position:relative;overflow:hidden}
+#zoomTip .fluid{position:absolute;bottom:0;left:2px;right:2px;height:0;background:#62c9ec;transition:height .25s}
+#zoomTip .point{margin:auto;width:6px;height:36px;background:linear-gradient(90deg,#a7d0e2,#fff);clip-path:polygon(0 0,100% 0,55% 100%,45% 100%)}
+#zoomActions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+#zoomActions button{font-size:14px}
+#zoomVolume{font-weight:800;color:#b4f3ff}
+</style>
+<div id="plateZoom" aria-label="Magnified 24-well plate work area"><div id="zoomCard"><div id="zoomHead"><h2>🔬 Close-up: 24-well culture plate</h2><button id="zoomClose">Return to 3D room</button></div><div id="zoomStatus">Move the tip over a well and click.</div><div id="zoomPlate"><div id="zoomTip"><div class="shaft"><div class="fluid" id="zoomTipFluid"></div></div><div class="point"></div></div></div><div id="zoomActions"><button id="zoomLoad">Draw 10 mL PBS from bottle</button><button id="zoomReturn">Put tool back (G)</button><span id="zoomVolume"></span></div><p style="text-align:center;color:#b6d1dd;font-size:12px;margin-bottom:0">Enlarged work view for accurate targeting · Game simulation · 10 mL divided across 24 wells</p></div></div>
+<script>
 const zoomRoot=document.getElementById('plateZoom'),zoomPlate=document.getElementById('zoomPlate');
 const zoomTip=document.getElementById('zoomTip');
 function refreshPlateZoom(){
@@ -441,9 +330,27 @@ document.getElementById('zoomClose').onclick=closePlateZoom;
 document.getElementById('zoomLoad').onclick=()=>{loadPBS();refreshPlateZoom()};
 document.getElementById('zoomReturn').onclick=()=>{if(aspiratorHeld)returnAspirator();else if(washPipetteHeld)returnPipette();refreshPlateZoom()};
 document.addEventListener('keydown',e=>{if(e.code==='Escape')closePlateZoom()});
+</script>
 
-;
-
+<style>
+#lysisOverlay{position:fixed;inset:0;z-index:120;background:#04131de9;display:none;align-items:center;justify-content:center;padding:18px;color:#eafaff;font-family:system-ui}
+#lysisCard{width:min(850px,96vw);max-height:94vh;overflow:auto;background:#122b3c;border:2px solid #73c6d5;border-radius:20px;padding:20px;box-shadow:0 20px 80px #000a}
+#lysisCard button{background:#236c8d;color:white;border:1px solid #85d6ef;padding:11px 14px;border-radius:9px;cursor:pointer;font-weight:700;margin:5px}
+#lysisCard button:disabled{opacity:.38;cursor:not-allowed}
+#lysisGrid{display:grid;grid-template-columns:repeat(6,minmax(35px,1fr));gap:8px;margin:14px auto;max-width:650px}
+.lysisWell{aspect-ratio:1;border:5px solid #d3e9ed;border-radius:50%;background:#9bd8e7;display:flex;align-items:center;justify-content:center;color:#123e52;cursor:pointer;font-weight:800;box-shadow:inset 0 5px 10px #16465a55}
+.lysisWell.done{background:#745d9d;color:white}.lysisWell:hover{outline:3px solid #f9df6a}
+#lysisBar{height:16px;border-radius:20px;border:1px solid #9ad6ed;background:#1d4256;overflow:hidden;margin-top:8px}
+#lysisFill{height:100%;width:0%;background:linear-gradient(90deg,#a37fe4,#e7a4ff);transition:width .25s}
+</style>
+<div id="lysisOverlay"><div id="lysisCard">
+<h2>🧪 Next step: Laemmli buffer and cell lysis</h2>
+<p id="lysisInstruction">Return the PBS pipette, then collect a new transfer pipette and the Laemmli buffer bottle.</p>
+<div><button id="lysisFresh">1 · Get a fresh pipette</button><button id="lysisAttach" disabled>2 · Attach to controller</button><button id="lysisDraw" disabled>3 · Draw Laemmli buffer</button><button id="lysisBack">Return to lab</button></div>
+<p id="lysisMeter">Buffer in pipette: 0.00 mL · Wells treated: 0 / 24</p><div id="lysisBar"><div id="lysisFill"></div></div>
+<div id="lysisGrid"></div><p style="font-size:12px;color:#b7d2df">Educational game representation: the source protocol describes solubilizing collected cell pellets in 200 µL Laemmli buffer with fresh β-mercaptoethanol and protease inhibitors, not adding buffer directly to 24 culture wells. The 24-well action here is a requested gameplay simplification.</p>
+</div></div>
+<script>
 const lysisOverlay=document.getElementById('lysisOverlay');let freshLysis=false,attachedLysis=false,loadedLysis=false,lysisDone=0;
 const lysisTotal=4.8,lysisPerWell=.2;const lysisCells=[];
 function refreshLysis(){const remaining=loadedLysis?Math.max(0,lysisTotal-lysisDone*lysisPerWell):0;
@@ -466,9 +373,8 @@ returnPipette=function(){const finished=workflow>=4;originalReturnPipette();if(f
 // A visible bottle in the 3D hood can also launch the new workflow.
 interact('Laemmli sample buffer',-4.15,1.5,-4.36,2.6,()=>{if(workflow<5||aspiratorHeld||washPipetteHeld)return msg('First remove PBS from all 24 wells and return the aspirator.');openLysis()});
 interact('Fresh lysis pipette',-3.83,1.5,-4.34,2.6,()=>{if(workflow<5||aspiratorHeld||washPipetteHeld)return msg('First aspirate the PBS from all 24 wells and return the aspirator.');openLysis()});
-
-;
-
+</script>
+<script>
 // Reference-inspired freestanding central laboratory island: white counters,
 // oak drawer pedestals, overhead open shelves, utility outlets and strip lighting.
 (function(){
@@ -556,27 +462,19 @@ const glassMat=new T.MeshStandardMaterial({color:0xa5e7f4,transparent:true,opaci
 function flask(x,z,liquid){let g=new T.Group();g.position.set(x,1.33,z);hood.add(g);let body=new T.Mesh(new T.CylinderGeometry(.09,.23,.43,20),glassMat);body.position.y=.22;g.add(body);let neck=new T.Mesh(new T.CylinderGeometry(.075,.075,.23,20),glassMat);neck.position.y=.53;g.add(neck);cyl(.18,.18,.12,0,.1,0,liquid,g);return g}
 flask(-.85,-.1,0x45d4a4);flask(-.25,.05,0xa978ee);flask(.55,-.15,0x59b9f2);
 const hoodLight2=new T.PointLight(0xe8f8ff,4,4);hoodLight2.position.set(8.0,2.65,-3.7);scene.add(hoodLight2);
-// Scientist: use the uploaded GLB as the ONLY visible character model.
-// Keep the scientist group because fire, rescue, and collapse logic reference it.
+// Stylized scientist wearing a white lab coat, goggles and dark trousers.
 const scientist=new T.Group();scientist.position.set(8.0,0,-1.55);scene.add(scientist);
-(function loadScientistGLB(){
- Promise.resolve().then(()=>{
-  new GLTFLoader().load('./scientist character 3d model.glb',gltf=>{
-   const model=gltf.scene;
-   model.traverse(obj=>{if(obj.isMesh){obj.castShadow=true;obj.receiveShadow=true;if(obj.material){const materials=Array.isArray(obj.material)?obj.material:[obj.material];materials.forEach(m=>{m.side=T.DoubleSide;m.needsUpdate=true;});}}});
-   model.updateMatrixWorld(true);
-   const bounds=new T.Box3().setFromObject(model),size=bounds.getSize(new T.Vector3());
-   if(size.y<=0)throw new Error('GLB model has no measurable height');
-   model.scale.multiplyScalar(2.2/size.y);
-   model.updateMatrixWorld(true);
-   const adjusted=new T.Box3().setFromObject(model),center=adjusted.getCenter(new T.Vector3());
-   model.position.set(-center.x,-adjusted.min.y,-center.z);
-   scientist.add(model);
-   window.scientistGLB=model;
-   console.info('Uploaded scientist GLB loaded');document.getElementById('characterLoadStatus').textContent='✓ Scientist loaded — walk to the chemistry room (right side) to see it.';setTimeout(()=>document.getElementById('characterLoadStatus')?.remove(),10000);
-  },progress=>{if(progress.total){document.getElementById('characterLoadStatus').textContent='Loading scientist: '+Math.round(progress.loaded/progress.total*100)+'%';}},err=>{console.error('Scientist GLB load failed',err);document.getElementById('characterLoadStatus').textContent='Scientist load error: '+(err?.message||String(err));msg('Scientist GLB could not load.');});
- }).catch(err=>{console.error('GLTFLoader import failed',err);document.getElementById('characterLoadStatus').textContent='3D loader failed. Check your internet connection and reload.';msg('3D loader failed.');});
-})();
+const dark=0x263646,coat=0xf2f5f4,skin=0xc88f6f;
+box(.25,.82,.27,-.18,.47,0,dark,scientist);box(.25,.82,.27,.18,.47,0,dark,scientist);
+box(.55,.87,.32,0,1.28,0,coat,scientist);
+box(.025,.78,.34,0,1.26,.015,0x9aaeb9,scientist);
+box(.19,.73,.28,-.39,1.32,0,coat,scientist).rotation.z=-.26;
+box(.19,.73,.28,.39,1.32,0,coat,scientist).rotation.z=.34;
+for(let i=0;i<3;i++)cyl(.025,.025,.012,.07,1.48-i*.17,.18,0x3b6a83,scientist);
+cyl(.21,.21,.36,0,1.99,0,skin,scientist,24);
+const hair=cyl(.215,.215,.13,0,2.2,0,0x302b2d,scientist,24);
+box(.43,.115,.12,0,2.03,.18,0xa9dcea,scientist);
+box(.1,.12,.08,-.29,1.0,0,skin,scientist);box(.1,.12,.08,.29,1.0,0,skin,scientist);
 // Flames are emissive, translucent tapered cones, with rising embers and smoke.
 const flames=[],embers=[],smoke=[];
 function fireMat(color,opacity){return new T.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending})}
@@ -714,9 +612,9 @@ document.getElementById('help').textContent='WASD move · Drag mouse to look aro
 document.getElementById('guide').style.display='none';
 document.getElementById('targetBubble').style.display='none';
 })();
+</script>
 
-;
-
+<script>
 // Interactive sink faucet: click the chrome tap to toggle animated running water.
 (function(){
  const sink=window.interactiveLabSink, target=window.labFaucetTarget;
@@ -749,9 +647,8 @@ document.getElementById('targetBubble').style.display='none';
  document.getElementById('help').textContent+=' · Click sink faucet to turn water on/off';
  document.getElementById('objective').textContent+=' Click the chrome faucet to toggle running water.';
 })();
-
-;
-
+</script>
+<script>
 // Pick-up 500 mL glass beaker and water filling interaction.
 (function(){
  const sink=window.interactiveLabSink;if(!sink)return;
@@ -796,9 +693,49 @@ document.getElementById('targetBubble').style.display='none';
  document.getElementById('help').textContent+=' · Click glass beaker to pick up · Hold beneath running faucet to fill · Click the green target on the scientist to pour water and pause damage (more water = longer protection) · G put down';
  document.getElementById('objective').textContent+=' A 500 mL glass beaker sits to the right of the faucet; pick it up and hold it beneath running water.';
 })();
+</script>
 
-;
-
+<style>
+/* Arcade fighting-game inspired health display, above all 3D fire effects. */
+#scientistHealth{position:fixed;top:16px;right:18px;left:auto;z-index:105;width:min(520px,calc(100vw - 36px));pointer-events:none;display:flex;filter:drop-shadow(0 4px 7px #000e);font-family:Impact,'Arial Black',system-ui,sans-serif}
+#scientistHealth .healthTitle{font-size:17px;letter-spacing:1.3px;color:#f6ffff;text-align:left;text-shadow:2px 2px #000,-1px -1px #183e50;padding:0 8px 5px;background:none}
+#scientistHealth .healthTrack{height:33px;background:linear-gradient(#270b13,#5b1018 45%,#29060b);border:3px solid #161c24;border-radius:10px 7px 14px 9px;overflow:hidden;position:relative;box-shadow:0 0 0 2px #b8c4a4,0 0 0 4px #293c42,inset 0 2px 6px #000c,0 3px 9px #000c;transform:skewX(-7deg)}
+#scientistHealth .healthFill{height:100%;width:100%;background:linear-gradient(to bottom,#ffff9e 0%,#fff934 20%,#ffe500 48%,#e5b900 79%,#9b8b16 100%);box-shadow:inset 0 2px 1px #ffffc9,inset 0 -3px 3px #a87500;transform-origin:left;transition:width .05s linear;position:relative}
+#scientistHealth .healthFill:after{content:'';position:absolute;inset:2px 0 auto;height:5px;background:#fff9a7aa;border-radius:5px}
+#scientistHealth .healthNumber{position:absolute;inset:0;text-align:center;font:bold 16px/27px Impact,'Arial Black',system-ui,sans-serif;color:#fff;text-shadow:2px 2px 2px #000,-1px -1px #000;transform:skewX(7deg)}
+#scientistHealth .healthWarning{font:bold 13px Impact,'Arial Black',system-ui,sans-serif;letter-spacing:1px;color:#ffdbca;text-align:left;text-shadow:2px 2px 3px #000;margin:8px 0 0 7px}
+#scientistHealth.critical .healthTrack{animation:healthPulse .35s infinite alternate;box-shadow:0 0 0 2px #ffaaa2,0 0 0 4px #7c1921,0 0 20px #ff2419}
+@keyframes healthPulse{to{filter:brightness(1.45)}}
+#fireGameOver{display:none;position:fixed;inset:0;z-index:110;background:#10090bdc;align-items:center;justify-content:center;text-align:center;padding:24px}
+#fireGameOver .gameOverCard{background:#25171c;border:2px solid #ff5a4e;border-radius:18px;padding:30px;max-width:460px;color:white;box-shadow:0 12px 55px #000c}
+#fireGameOver h2{font-size:38px;color:#ff7164;margin:0 0 10px}
+#scientistHealth{align-items:center;gap:12px;padding:10px 13px;background:linear-gradient(115deg,#0b1a2cf2,#1c3445ed);border:2px solid #9aaeb5;border-radius:12px;box-shadow:0 8px 25px #000b;}
+#scientistHealth .healthPortrait{width:76px;height:84px;flex:none;border:3px solid #d2b95d;border-radius:8px;overflow:hidden;box-shadow:0 0 0 2px #263e49,inset 0 0 8px #000;}
+#scientistHealth .healthPortrait svg{width:100%;height:100%;display:block}
+#scientistHealth .healthDetails{flex:1;min-width:0}
+#scientistHealth .healthTitle{font-size:18px;padding:0 0 9px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+#scientistHealth .healthTag{font:700 11px system-ui,sans-serif;color:#9af8dc}
+#scientistHealth .healthTrack{height:34px}
+@media(max-width:620px){#scientistHealth{top:8px;right:8px;width:min(310px,calc(100vw - 16px));padding:7px;gap:7px}#scientistHealth .healthPortrait{width:51px;height:62px}#scientistHealth .healthTitle{font-size:13px;padding-bottom:5px}#scientistHealth .healthTrack{height:27px}#scientistHealth .healthNumber{font-size:13px;line-height:21px}#scientistHealth .healthWarning{font-size:10px;margin-top:5px}}
+</style>
+<div id="scientistHealth" aria-label="Scientist health meter"><div class="healthPortrait"><svg viewBox="0 0 90 100" role="img" aria-label="Scientist portrait" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="portraitBg" x2="1" y2="1"><stop stop-color="#244d66"/><stop offset="1" stop-color="#071622"/></linearGradient></defs><rect width="90" height="100" rx="8" fill="url(#portraitBg)"/><path d="M7 100 Q10 68 29 65 L61 65 Q81 68 85 100" fill="#f1f5f8" stroke="#a3c8da" stroke-width="2"/><path d="M29 66 L44 90 L61 66 L53 100 L36 100Z" fill="#b4d6e5"/><path d="M39 65 L45 76 L51 65" fill="#283d50"/><rect x="39" y="56" width="13" height="14" rx="5" fill="#dba67e"/><ellipse cx="45" cy="37" rx="23" ry="29" fill="#e7b28a"/><path d="M22 40 Q14 3 45 7 Q75 2 69 41 L62 25 Q45 34 27 24Z" fill="#2a2a31"/><path d="M30 40 h11 m8 0 h11" stroke="#293c47" stroke-width="2.5"/><path d="M43 39 h5" stroke="#293c47" stroke-width="2"/><path d="M40 54 Q45 58 51 54" fill="none" stroke="#9b5749" stroke-width="2"/><path d="M10 100 Q10 82 20 74" stroke="#ffb039" stroke-width="4" opacity=".8"/></svg></div><div class="healthDetails"><div class="healthTitle">SCIENTIST <span class="healthTag">PLAYER 1</span></div><div class="healthTrack"><div class="healthFill" id="scientistHealthFill"></div><div class="healthNumber" id="scientistHealthNumber">100%</div></div><div class="healthWarning" id="scientistHealthWarning">FIRE DAMAGE!</div></div></div>
+<div id="fireGameOver"><div class="gameOverCard"><h2>GAME OVER</h2><p>The scientist's health reached zero.</p><p>The scientist collapsed before the fire could be extinguished.</p><button id="restartFireGame">TRY AGAIN</button></div></div>
+<style>
+#fireVictory{display:none;position:fixed;inset:0;z-index:100000;background:radial-gradient(ellipse at center,#17495d 0%,#091b32 55%,#050c1c 100%);align-items:center;justify-content:center;text-align:center;color:#f7fcff;font-family:system-ui,Arial,sans-serif;overflow:hidden}
+#fireVictory.active{display:flex;animation:victoryReveal .85s ease-out both}
+#fireVictory .victoryCard{position:relative;z-index:2;max-width:680px;padding:38px 28px}
+#fireVictory .victoryIcon{font-size:70px;filter:drop-shadow(0 0 20px #ffda73)}
+#fireVictory h2{font-size:clamp(42px,7vw,85px);margin:12px 0;color:#ffe389;letter-spacing:.07em;text-shadow:0 4px 0 #835727,0 0 35px #ffcf6380}
+#fireVictory p{font-size:clamp(18px,2.5vw,25px);margin:10px 0 25px}
+#fireVictory .victorySub{color:#a8e9ec;font-size:17px}
+#fireVictory button{margin:9px;padding:13px 20px;border:0;border-radius:10px;background:#ffe08a;color:#132e39;font-weight:800;cursor:pointer}
+#fireVictory button.secondary{background:#2d6075;color:white;border:1px solid #7cc5d6}
+#fireVictory .spark{position:absolute;width:9px;height:9px;background:#ffe28e;transform:rotate(45deg);opacity:.8;animation:victorySpark 3s ease-in-out infinite alternate}
+@keyframes victoryReveal{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:scale(1)}}
+@keyframes victorySpark{from{transform:translateY(25px) rotate(0deg);opacity:.15}to{transform:translateY(-70px) rotate(180deg);opacity:1}}
+</style>
+<div id="fireVictory" role="dialog" aria-modal="true" aria-labelledby="victoryTitle"><div class="victoryCard"><div class="victoryIcon">🏆</div><h2 id="victoryTitle">VICTORY!</h2><p>🔥 FIRE EXTINGUISHED! 🚿</p><div class="victorySub">You activated the emergency shower and saved the laboratory.</div><div><button id="victoryReplayMusic">♪ Replay victory fanfare</button><button class="secondary" id="victoryRestart">Play again</button></div></div></div>
+<script>
 // Original short celebratory fanfare, not the Final Fantasy melody.
 (function(){
  'use strict';
@@ -835,9 +772,8 @@ document.getElementById('targetBubble').style.display='none';
  document.getElementById('victoryReplayMusic').addEventListener('click',playFanfare);
  document.getElementById('victoryRestart').addEventListener('click',()=>location.reload());
 })();
-
-;
-
+</script>
+<script>
 // Independent health system: does not depend on the Three.js render loop.
 (function () {
   'use strict';
@@ -896,9 +832,8 @@ document.getElementById('targetBubble').style.display='none';
     if(!running && (intro.style.display === 'none' || getComputedStyle(intro).display === 'none')) begin();
   }).observe(intro, {attributes:true, attributeFilter:['style','class']});
 })();
-
-;
-
+</script>
+<script>
 // Optional 3D effects are isolated: errors here cannot stop the health countdown.
 (function () {
   const state = window.scientistHealthGame;
@@ -1004,9 +939,15 @@ document.getElementById('targetBubble').style.display='none';
   } catch(error) { console.error('Optional rescue/collapse effects:',error); }
   document.getElementById('objective').textContent+=' Fill the beaker with any amount of water, then click the scientist while holding it to empty the beaker and pause damage for a duration based on the water amount.';
 })();
+</script>
 
-;
-
+<style>
+#showerFixPanel{display:none!important;position:fixed;top:155px;left:115px;z-index:10000;background:#102b3f;color:#fff;border:2px solid #61e8c0;border-radius:12px;padding:12px;font:13px system-ui;max-width:370px;box-shadow:0 4px 20px #0008}
+#showerFixPanel button{background:#69e6bd;color:#092e2b;font-weight:bold;border:0;border-radius:7px;padding:11px 14px;margin:5px;cursor:pointer}
+#showerFixStatus{display:block;margin-top:6px;color:#fff4b8;overflow-wrap:anywhere}
+</style>
+<div id="showerFixPanel"><strong>🚿 SHOWER CONTROL — FIRE FADE</strong><div><button type="button" id="showerFixToggle">SHOWER OFF — TURN ON</button><button type="button" id="showerFixGo">GO TO SHOWER</button></div><span id="showerFixStatus">Initializing…</span></div>
+<script>
 (function(){
  'use strict';
  const status=document.getElementById('showerFixStatus');
@@ -1050,9 +991,31 @@ document.getElementById('targetBubble').style.display='none';
   status.textContent='Controller READY — click green button to turn water ON';
  } catch(err){status.textContent='CONTROLLER ERROR: '+err.message;console.error(err)}
 })();
+</script>
 
-;
-
+<!-- Ink-and-parchment storybook visual treatment -->
+<style id="storybook-style">
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Special+Elite&display=swap');
+:root{--paper:#dfcfaa;--ink:#201c1a;--ochre:#a17c48;--blood:#8b3e35}
+body{background:#272820;color:var(--paper);font-family:'Special Elite',Georgia,serif}
+body:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:4;background:repeating-linear-gradient(13deg,transparent 0 5px,#1d171009 6px 7px),radial-gradient(ellipse at center,transparent 37%,#100e0a8a 100%);mix-blend-mode:multiply}
+#hud,#help,#inventory,#prompt,#notice,#pbsPanel,#guide,#intro,#zoomCard{background:#d7c49e!important;color:#28221c!important;border:3px solid #241d19!important;border-radius:3px 12px 4px 10px!important;box-shadow:4px 5px 0 #1b1715,0 12px 30px #0009!important;outline:1px dashed #665238;outline-offset:-8px}
+#hud h1,#intro h2,#zoomHead h2,#pbsPanel strong,#guide b{font-family:'IM Fell English SC',Georgia,serif!important;color:#703d30!important;letter-spacing:.6px}
+#hud h1{font-size:22px}#room,#objective,#help,#inventory,#zoomStatus,#pbsPanel small,#zoomVolume{color:#332a20!important}
+#overlay,#plateZoom{background:#17160fe8!important}
+button,#targetBubble{font-family:'IM Fell English SC',Georgia,serif!important;font-size:16px;background:#aa8553!important;color:#201a15!important;border:2px solid #211b17!important;border-radius:3px 9px 4px 8px!important;box-shadow:3px 4px 0 #211b17!important;text-shadow:0 1px #e4c994;transition:transform .12s,filter .12s}
+button:hover,#targetBubble:hover{filter:brightness(1.15) contrast(1.1);transform:rotate(-1deg) translateY(-2px)}
+#cross{color:#f3dbab;text-shadow:-2px -2px #191511,2px 2px #191511;animation:inkTwitch 3.7s steps(2,end) infinite}
+#minimap{border:4px solid #2a2119;border-radius:3px;filter:sepia(.8) saturate(.65);box-shadow:3px 4px 0 #171310}
+#zoomPlate{border-color:#574835!important;background:linear-gradient(145deg,#e0cfac,#968367)!important;border-radius:7px 17px 5px 12px!important;box-shadow:inset 0 0 0 5px #2c241b,7px 8px 0 #201a16!important}
+.zoomWell{border-color:#574c3b!important;box-shadow:inset 0 7px 12px #241b1599,2px 3px 0 #201a16!important;filter:saturate(.68) sepia(.22)}
+.zoomWell:hover{outline-color:#d5a75c!important}
+#zoomTip{filter:sepia(.5) drop-shadow(3px 4px 0 #231b16)!important}
+#intro p{line-height:1.6}#intro p[style]{color:#65513d!important}
+@keyframes inkTwitch{0%,89%,100%{transform:translate(-50%,-50%) rotate(0deg)}90%{transform:translate(-50%,-50%) rotate(-7deg)}94%{transform:translate(-50%,-50%) rotate(5deg)}}
+@media(max-width:600px){#hud{max-width:240px;padding:12px}#hud h1{font-size:17px}#inventory{top:auto;bottom:60px;right:8px}#minimap{width:130px;height:90px}}
+</style>
+<script id="storybook-3d">
 (function(){
  if(!window.THREE||typeof scene==='undefined')return;
  const ink=0x211d19;
@@ -1094,6 +1057,5 @@ document.getElementById('targetBubble').style.display='none';
  requestAnimationFrame(inkMotion);
  const map=document.getElementById('minimap');if(map)map.style.imageRendering='auto';
 })();
-
 </script>
 </body></html>
