@@ -1,0 +1,995 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Faucet + Shower Prototype — Full Lab Objects</title><style>
+*{box-sizing:border-box}body{margin:0;background:#07121c;color:#f0f7ff;font-family:system-ui,Arial;overflow:hidden}canvas{display:block}#hud{position:fixed;top:15px;left:15px;z-index:5;background:#0c2032dc;border:1px solid #4d8194;border-radius:14px;padding:15px;width:min(330px,calc(100vw - 30px));pointer-events:none}h1{font-size:18px;margin:0 0 6px;color:#9ff6d8}#room{font-weight:700}#objective{font-size:13px;color:#c6e1e8;margin-top:7px;line-height:1.45}#help{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:12px 18px;background:#071d2de6;border:1px solid #4b7788;border-radius:12px;text-align:center;font-size:13px;z-index:5;max-width:95vw}#cross{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:#fff9;text-shadow:0 1px 5px #000;pointer-events:none}#prompt{position:fixed;top:57%;left:50%;transform:translateX(-50%);font-weight:700;background:#123044d9;border-radius:9px;padding:8px 15px;display:none;white-space:nowrap}#overlay{position:fixed;inset:0;z-index:10;background:#051421e8;display:flex;justify-content:center;align-items:center;padding:20px}#intro{max-width:520px;background:#153247;border:1px solid #7db9b9;border-radius:18px;padding:30px;box-shadow:0 30px 100px #000a}#intro h2{color:#a8f3d8;margin-top:0}button{background:#6be0bc;color:#062c2d;border:0;border-radius:9px;padding:12px 19px;font-weight:800;cursor:pointer}button:hover{filter:brightness(1.1)}#notice{position:fixed;top:120px;right:18px;background:#153447ee;padding:12px;border-radius:10px;max-width:300px;display:none;z-index:7}#inventory{position:fixed;top:16px;right:15px;background:#102c3bdc;padding:11px;border:1px solid #527e91;border-radius:11px;font-size:13px;z-index:5}#minimap{position:fixed;right:15px;bottom:75px;width:180px;height:125px;border:1px solid #4d8194;border-radius:9px;background:#102331df;z-index:5}#fallback{display:none;position:fixed;inset:0;background:#0b1e2b;z-index:20;padding:40px;text-align:center}#guide{position:fixed;left:15px;bottom:78px;z-index:8;width:min(355px,calc(100vw - 30px));background:#102d40f5;border:2px solid #ffdb6d;border-radius:15px;padding:14px;box-shadow:0 8px 35px #0008}#guide b{color:#ffe58e}#guide p{margin:7px 0;font-size:13px;line-height:1.45}#guide button{padding:9px 12px;margin:3px;font-size:12px}#targetBubble{position:fixed;z-index:9;display:none;transform:translate(-50%,-50%);background:#ffdc63;color:#17202a;border:3px solid #fff4ba;border-radius:28px;padding:13px 18px;font-weight:900;box-shadow:0 0 0 8px #ffd35a44,0 0 28px #ffd35a;cursor:pointer;white-space:nowrap;animation:pulse 1.3s infinite alternate}@keyframes pulse{to{box-shadow:0 0 0 15px #ffd35a22,0 0 38px #ffd35a}}#targetBubble:hover{filter:brightness(1.15)}#hud{top:10px}#help{font-size:12px} #pbsPanel{position:fixed;right:15px;top:84px;z-index:6;width:225px;background:#102b3deF;border:1px solid #83d7ee;border-radius:13px;padding:10px 12px;display:none;box-shadow:0 7px 25px #0007}#pbsPanel strong{font-size:13px;color:#b8f1ff}#pbsPanel small{display:block;color:#b5d5df;font-size:11px;margin-top:3px}#pbsGauge{display:block;margin:auto;width:95px;height:180px}#pbsFluid{transition:y .35s,height .35s}#pbsFlow{opacity:0;transition:opacity .2s}#pbsPanel.filling #pbsFlow{opacity:1;animation:pbsDrop .65s ease-in-out 2}#pbsPanel.filling #pbsFluid{transition:height .9s,y .9s}@keyframes pbsDrop{0%{transform:translateY(-12px);opacity:0}50%{opacity:1}100%{transform:translateY(25px);opacity:0}}#guide,#targetBubble,#pbsPanel{display:none!important}</style></head><body>
+<div id="hud"><h1>🧬 WESTERN BLOT · 3D LAB</h1><div id="room">Tissue culture room</div><div id="objective">Explore the tissue culture room. Open the reagent fridge and inspect the cell incubator.</div></div><div id="inventory">🖐️ Holding: <span id="held">Nothing</span></div><div id="cross">+</div><div id="pbsPanel" aria-live="polite"><strong>🧪 10 mL sterile serological pipette</strong><svg id="pbsGauge" viewBox="0 0 110 180" role="img" aria-label="PBS liquid level in pipette"><defs><clipPath id="pipetteClip"><rect x="42" y="17" width="27" height="125" rx="10"/></clipPath></defs><rect x="40" y="14" width="31" height="132" rx="12" fill="#e7faff" fill-opacity=".22" stroke="#b5e9f7" stroke-width="3"/><g clip-path="url(#pipetteClip)"><rect id="pbsFluid" x="42" y="142" width="27" height="0" fill="#3bb7ee" opacity=".9"/></g><path d="M48 146 L48 167 L62 167 L62 146" fill="none" stroke="#b5e9f7" stroke-width="3"/><g stroke="#d6f7ff" stroke-width="1.4"><path d="M43 28 h12"/><path d="M43 39 h7"/><path d="M43 50 h12"/><path d="M43 61 h7"/><path d="M43 72 h12"/><path d="M43 83 h7"/><path d="M43 94 h12"/><path d="M43 105 h7"/><path d="M43 116 h12"/><path d="M43 127 h7"/></g><g id="pbsFlow"><path d="M55 0 L55 17" stroke="#35c7f5" stroke-width="5" stroke-linecap="round"/><circle cx="55" cy="10" r="5" fill="#35c7f5"/></g></svg><strong id="pbsVolume">0.00 / 10.00 mL</strong><small id="pbsProgress">Fill once, then dispense into 24 wells.</small></div><div id="prompt"></div><div id="notice"></div><canvas id="minimap" width="360" height="250"></canvas><div id="guide"><b id="guideTitle">GUIDED WESTERN BLOT · 1 / 5</b><p id="guideText">Open the incubator, then pick up the culture plate inside.</p><button id="findTarget">🎯 Show me where</button><button id="skipTarget">Skip step →</button></div><button id="targetBubble" type="button">👆 Click here</button><div id="help">WASD move · Drag to look · Explore the central chemistry lab bench</div><div id="overlay"><div id="intro"><h2>Explore your interactive 3D laboratory</h2><p>Explore a chemistry laboratory with a central island bench and a scientist standing in front of it.</p><p>Move the mouse to look in any direction. Explore the central chemistry workbench, white countertops, wood drawer cabinets, and overhead utility shelves. Click “Show me where” to face the next object. Drag your mouse to rotate the camera. Open the fridge, click a reagent bottle to pick it up, walk to a bench, and click a glowing pad to place it. The laboratory is an educational model, not an operating protocol.</p><button id="start">ENTER LAB</button><p style="font-size:12px;color:#b5d3dd">Requires an internet connection to load the 3D rendering library.</p></div></div><div id="fallback">Unable to load the 3D engine. Check your internet connection and reopen this file.</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script><script>
+if(!window.THREE){document.getElementById('fallback').style.display='block';throw Error('Three.js not loaded')}
+const T=THREE, scene=new T.Scene();scene.background=new T.Color('#9cb4c0');scene.fog=new T.Fog('#9cb4c0',22,48);const camera=new T.PerspectiveCamera(74,innerWidth/innerHeight,.07,90);camera.position.set(-7.2,1.65,0.65);const renderer=new T.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;document.body.prepend(renderer.domElement);scene.add(new T.HemisphereLight(0xe7f6ff,0x64717a,2));const sun=new T.DirectionalLight(0xffffff,2.1);sun.position.set(-3,11,5);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const mats={floor:0xc6d9df,wall:0xe4eef1,trim:0x8aa6b4,bench:0xe2e9ed,steel:0x8a9da8,glass:0x80d5df,blue:0x316a91,navy:0x274354,black:0x27353c,white:0xf7f8f5,green:0x6dc4a4,orange:0xf1bd67,red:0xc56b73,liquid:0xd4a4da};function mat(c,opacity=1){return new T.MeshStandardMaterial({color:c,roughness:.55,metalness:.06,transparent:opacity<1,opacity})}function box(w,h,d,x,y,z,c,parent=scene){let m=new T.Mesh(new T.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}function cyl(r1,r2,h,x,y,z,c,parent=scene,n=18){let m=new T.Mesh(new T.CylinderGeometry(r1,r2,h,n),mat(c));m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m}function label(text,x,y,z,scale=.2,rot=0){const cv=document.createElement('canvas');cv.width=512;cv.height=100;let c=cv.getContext('2d');c.fillStyle='#173549';c.fillRect(0,0,512,100);c.fillStyle='#f2f9ff';c.font='bold 37px Arial';c.textAlign='center';c.fillText(text,256,62);let t=new T.Mesh(new T.PlaneGeometry(scale*5.12,scale),new T.MeshBasicMaterial({map:new T.CanvasTexture(cv),side:T.DoubleSide}));t.position.set(x,y,z);t.rotation.y=rot;scene.add(t)}
+// Two rooms: x -10 to 0 culture, 0 to 10 bench; connecting doorway in central wall.
+box(20,.22,12,0,-.12,0,mats.floor);box(20,.18,.25,0,3.15,-6,mats.wall);box(20,.18,.25,0,3.15,6,mats.wall);box(.25,3.3,12,-10,1.55,0,mats.wall);box(.25,3.3,12,10,1.55,0,mats.wall);box(20,3.3,.2,0,1.55,-6,mats.wall);box(20,3.3,.2,0,1.55,6,mats.wall);box(.2,3.3,4.5,0,1.55,-3.75,mats.wall);box(.2,3.3,4.5,0,1.55,3.75,mats.wall);box(.2,.75,3,0,2.95,0,mats.wall);box(.23,.14,3.1,0,2.55,0,mats.trim);box(.3,3.1,.15,0,1.55,-2.25,mats.trim);box(.3,3.1,.15,0,1.55,2.25,mats.trim);
+for(const x of [-5,5]){box(4,.07,1.8,x,3.18,0,0xf5ffff);let l=new T.PointLight(0xe6faff,65,11);l.position.set(x,2.95,0);scene.add(l)}
+label('TISSUE CULTURE',-5,2.72,-5.86,.26);label('WESTERN BLOT BENCH',5,2.72,-5.86,.26);
+// benches and instruments
+function bench(x,z,w=3.3){box(w,.16,1.12,x,.92,z,mats.bench);for(const dx of [-w/2+.15,w/2-.15])for(const dz of [-.42,.42])box(.1,.9,.1,x+dx,.42,z+dz,mats.steel)}
+bench(-5.7,-4.6,5);bench(-6,4.6,5);bench(5.4,-4.6,6.8);bench(5.3,4.6,6.8);
+// Incubator: hollow-looking dark chamber with an opaque hinged front door.
+// Incubator is a genuinely hollow box: the plate is visible through its open front.
+box(1.55,.20,1.3,-8.8,2.00,-1.65,mats.steel);
+box(1.55,.20,1.3,-8.8,.08,-1.65,mats.steel);
+box(.15,1.85,1.3,-9.50,1.04,-1.65,mats.steel);
+box(.15,1.85,1.3,-8.10,1.04,-1.65,mats.steel);
+box(1.55,1.85,.10,-8.8,1.04,-2.26,0x6c8795);
+const chamberLight=new T.PointLight(0xd9faff,2.5,2.2);chamberLight.position.set(-8.8,1.70,-1.6);scene.add(chamberLight);
+// Deep recessed cavity, framed by side/top/bottom trim instead of a solid front panel.
+// The front opening is deliberately empty: no panel blocks the plate.
+box(.12,1.65,.14,-9.47,1.12,-.91,0xc4d5de);
+box(.12,1.65,.14,-8.13,1.12,-.91,0xc4d5de);
+box(1.43,.11,.14,-8.8,1.91,-.91,0xc4d5de);
+box(1.43,.11,.14,-8.8,.32,-.91,0xc4d5de);
+const incubatorShelf=box(1.17,.055,.83,-8.8,1.03,-1.48,0xb4c8cf);
+// Solid door covers the chamber and cells until the player opens it.
+const incubatorDoor=new T.Group();incubatorDoor.position.set(-9.49,1.12,-.78);scene.add(incubatorDoor);
+box(1.39,1.69,.12,.695,0,0,0x45677c,incubatorDoor);
+box(.98,1.01,.025,.695,.10,.076,0x1c3648,incubatorDoor);
+box(.095,.48,.16,1.28,0,.15,0xe5f3f7,incubatorDoor);
+label('CO2 INCUBATOR',-8.8,2.28,-.9,.17);
+let incubatorOpen=false;
+// BSC
+// Biosafety cabinet with a visible OPEN ACCESS SLOT beneath its raised glass sash.
+// The sash is transparent and stops above the worktop, leaving an unobstructed front gap.
+box(2.45,.19,1.05,-5.7,2.47,-4.65,mats.white); // top canopy
+box(.13,1.35,1.05,-6.86,1.77,-4.65,mats.white); // left side
+box(.13,1.35,1.05,-4.54,1.77,-4.65,mats.white); // right side
+box(2.25,1.25,.08,-5.7,1.78,-5.14,0xc3dce5); // rear wall
+box(2.3,.11,.98,-5.7,1.04,-4.64,mats.steel); // work surface
+const sash=box(2.20,.54,.035,-5.7,2.07,-4.095,0x88d7e4);
+sash.material.transparent=true;sash.material.opacity=.24;sash.material.depthWrite=false;
+box(2.24,.045,.055,-5.7,1.79,-4.09,0x4a8294); // sash lower edge
+// Gap between sash lower edge and worktop is ~0.7 scene units.
+const hoodLight=new T.PointLight(0xe5ffff,2.5,2.5);hoodLight.position.set(-5.7,2.16,-4.7);scene.add(hoodLight);
+label('BIOSAFETY CABINET',-5.7,2.60,-4.06,.14);
+label('OPEN ACCESS GAP',-5.7,1.55,-4.075,.13);
+// Fridge with opening door
+box(1.45,2.3,1.15,-8.8,1.17,2.55,mats.white);box(1.29,1.96,.07,-8.8,1.2,3.15,mats.navy);for(let i=0;i<3;i++)box(1.12,.035,.7,-8.8,.5+i*.53,2.72,mats.steel);const doorPivot=new T.Group();doorPivot.position.set(-9.49,1.17,3.17);scene.add(doorPivot);box(1.43,2.27,.09,.72,0,0,mats.white,doorPivot);box(.1,.53,.1,1.27,.08,.1,mats.steel,doorPivot);label('REAGENT FRIDGE',-8.8,2.65,3.23,.15);
+// bottle components
+function bottle(x,y,z,c){let g=new T.Group();g.position.set(x,y,z);scene.add(g);box(.27,.44,.24,0,.25,0,c,g);cyl(.08,.08,.12,0,.54,0,mats.white,g);cyl(.12,.12,.09,0,.64,0,mats.blue,g);return g}const media=bottle(-8.96,.62,2.7,0xd9bbd7);const fbs=bottle(-8.53,.62,2.7,0xe9caa1);const glut=bottle(-8.96,1.15,2.7,0xc1e5cb);
+// culture plates
+function plate(x,y,z){
+ const g=new T.Group();g.position.set(x,y,z);scene.add(g);
+ const base=box(.82,.105,.58,0,0,0,0xe8f7fa,g);base.material.transparent=true;base.material.opacity=.78;
+ const wells=[];
+ // 24 wells: four rows by six columns, with dark recessed-looking cavities and liquid below the rim.
+ for(let row=0;row<4;row++)for(let col=0;col<6;col++){
+  const x=-.32+col*.128,z=-.204+row*.136;
+  const cavity=cyl(.054,.054,.008,x,.055,z,0x598998,g,24);
+  const inner=cyl(.045,.045,.008,x,.061,z,0x23485c,g,24);
+  const liquid=cyl(.040,.040,.006,x,.067,z,0xd7a4d0,g,24);
+  liquid.material=mat(0xd7a4d0,.83);
+  const rim=new T.Mesh(new T.TorusGeometry(.052,.008,7,24),new T.MeshStandardMaterial({color:0xf4ffff,roughness:.25}));rim.rotation.x=Math.PI/2;rim.position.set(x,.071,z);g.add(rim);
+  wells.push({liquid,cavity,inner,rim,x,z,aspirated:false});
+ }
+ return {mesh:g,wells};
+}
+const culturePlate=plate(-8.8,1.11,-1.45);culturePlate.mesh.visible=false;
+// The open plate exposes all 24 recessed wells and their pink media.
+plate(-5.25,1.05,4.5);
+// Molecular-biology instruments removed; chemistry worktops remain clear.
+// Interactive stations and physical carryable objects
+let interactions=[];const pickTargets=[];const pickRay=new T.Raycaster();const pointer=new T.Vector2(0,0);let hovered=null;let selectedGlow=null;
+function interact(name,x,y,z,dist,fn,description){
+ const a={name,pos:new T.Vector3(x,y,z),dist,fn,description};interactions.push(a);
+ const marker=new T.Mesh(new T.SphereGeometry(.52,12,10),new T.MeshBasicMaterial({color:0x71ffe0,transparent:true,opacity:0,depthWrite:false}));
+ marker.position.copy(a.pos);marker.userData.interaction=a;scene.add(marker);pickTargets.push(marker);a.marker=marker;
+}let fridgeOpen=false,held=null,carryMesh=null;let placementMode=false;let pickupSource=null;function msg(s){let el=document.getElementById('notice');el.textContent=s;el.style.display='block';clearTimeout(msg.timer);msg.timer=setTimeout(()=>el.style.display='none',4500)}function setHeld(name,mesh){if(held){msg('Place your current object first.');return false}held=name;carryMesh=mesh;pickupSource=mesh.position.clone();placementMode=true;document.getElementById('held').textContent=name;if(name==='24-well plate'){plateState='carried';updateGuide();}msg('Holding '+name+'. Walk to a bench, then click the glowing placement pad. G drops it nearby.');return true}function drop(){if(!held)return;const v=new T.Vector3(0,0,-1).applyQuaternion(camera.quaternion).add(camera.position);carryMesh.position.set(Math.max(-9.4,Math.min(9.4,v.x)),1.12,Math.max(-5.2,Math.min(5.2,v.z)));held=null;carryMesh=null;placementMode=false;document.getElementById('held').textContent='Nothing';msg('Object placed on the work surface. Click it to pick it up again.')}
+interact('Reagent fridge',-8.8,1.2,3.4,2.1,()=>{fridgeOpen=!fridgeOpen;doorPivot.rotation.y=fridgeOpen?1.65:0;msg(fridgeOpen?'Fridge opened: RPMI-1640, FBS and glutamine bottles inside.':'Fridge closed.')});interact('RPMI-1640 media bottle',-8.95,.95,2.7,1.8,()=>{if(!fridgeOpen)return msg('Open the reagent fridge first.');setHeld('RPMI-1640',media)});interact('FBS bottle',-8.5,.95,2.7,1.8,()=>{if(!fridgeOpen)return msg('Open the reagent fridge first.');setHeld('FBS',fbs)});interact('Glutamine bottle',-8.95,1.55,2.7,1.8,()=>{if(!fridgeOpen)return msg('Open the reagent fridge first.');setHeld('Glutamine',glut)});
+interact('CO₂ incubator',-8.8,1.3,-.8,2.8,()=>{if(held)return msg('Put down the object you are carrying first.');incubatorOpen=!incubatorOpen;incubatorDoor.rotation.y=incubatorOpen?-1.8:0;culturePlate.mesh.visible=incubatorOpen||plateState!=='incubator';msg(incubatorOpen?'✓ Door open: the 24-well plate is visible on the shelf. Click the plate to pick it up.':'Incubator door closed. Click again to open it.');updateGuide();});
+interact('Biosafety cabinet',-5.7,1.5,-4,2.1,()=>msg('Biosafety cabinet: a dedicated workspace for cell culture handling.'));
+interact('24-well plate',-8.8,1.15,-1.45,2.8,()=>{if(!incubatorOpen)return msg('The plate is hidden behind the closed incubator door. Open it first.');if(plateState==='incubator') {plateState='carried';setHeld('24-well plate',culturePlate.mesh);}else msg('The plate has already been taken out.');});
+interact('Centrifuge',2.6,1.5,-4.6,2,()=>msg('Centrifuge: used for harvesting and clearing lysates in the supplied protocol.'));
+const tube=new T.Group();tube.position.set(5.1,1.3,-4.6);scene.add(tube);cyl(.07,.05,.36,0,.18,0,0xc6e2ef,tube);cyl(.075,.075,.07,0,.39,0,mats.green,tube);
+interact('Eppendorf-style microcentrifuge tube',5.1,1.3,-4.6,1.9,()=>setHeld('Microcentrifuge tube',tube));
+interact('Pipette rack',7.4,1.4,-4.6,1.8,()=>msg('Micropipettes: used for moving small volumes of reagents and lysates.'));
+interact('Gel electrophoresis tank',3.25,1.3,4.6,2,()=>msg('Gel electrophoresis: the source describes 4–12% protein gels.'));
+interact('Membrane transfer station',6,1.3,4.6,2,()=>msg('Membrane transfer: the source describes nitrocellulose transfer for 3 hours at 70 V with stirring.'));
+interact('Blot imager',8.5,1.3,4.6,2,()=>msg('Imaging station: a visual placeholder. Antibody incubation and detection settings were not included in the supplied excerpt.'));
+
+// Physical placement pads: select a carried item, then click a pad to put it down.
+const placementPads=[];
+function pad(name,x,z,accept){const g=new T.Group();g.position.set(x,1.035,z);scene.add(g);const disk=new T.Mesh(new T.CylinderGeometry(.42,.42,.035,32),new T.MeshBasicMaterial({color:0xffd765,transparent:true,opacity:.58}));disk.position.y=.035;g.add(disk);const ring=new T.Mesh(new T.TorusGeometry(.42,.035,8,32),new T.MeshBasicMaterial({color:0xfff3a8}));ring.rotation.x=Math.PI/2;ring.position.y=.065;g.add(ring);const a={name,pos:new T.Vector3(x,1.1,z),dist:3.5,accept,group:g,disk,ring};placementPads.push(a);return a}
+pad('Culture workbench',-6.1,4.45,['RPMI-1640','FBS','Glutamine']);
+pad('Inside biosafety cabinet',-5.7,-4.28,['24-well plate']);
+pad('Tube rack',5.1,-4.3,['Microcentrifuge tube']);
+pad('Bench preparation area',4.0,-4.3,['RPMI-1640','FBS','Glutamine','Microcentrifuge tube']);
+function placeAt(a){if(!held){msg('Pick up a bottle or tube first.');return}if(!a.accept.includes(held)){msg('This item belongs at a different work area.');return}if(camera.position.distanceTo(a.pos)>a.dist){msg('Move closer to the placement pad.');return}const name=held;carryMesh.position.set(a.pos.x,1.12,a.pos.z);if(name==='24-well plate'&&a.name==='Inside biosafety cabinet'){plateState='hood';advanceWorkflow();}carryMesh.rotation.y=0;held=null;carryMesh=null;placementMode=false;document.getElementById('held').textContent='Nothing';msg('✓ Placed '+name+' at '+a.name+'. You can pick it up again.');}
+// All movable groups are selectable at their actual updated positions, including after placement.
+const movable=[{name:'24-well plate',mesh:culturePlate.mesh,requiresFridge:false},{name:'RPMI-1640',mesh:media,requiresFridge:true},{name:'FBS',mesh:fbs,requiresFridge:true},{name:'Glutamine',mesh:glut,requiresFridge:true},{name:'Microcentrifuge tube',mesh:tube,requiresFridge:false}];
+function physicalClick(){const ray=new T.Raycaster();ray.setFromCamera(pointer,camera);let candidates=[];for(const a of placementPads){if(held&&a.accept.includes(held)&&camera.position.distanceTo(a.pos)<a.dist){let hit=ray.intersectObject(a.group,true);if(hit.length)candidates.push({distance:hit[0].distance,fn:()=>placeAt(a)})}}if(!held)for(const m of movable){if(m.name==='24-well plate'&&(plateState==='hood'||!incubatorOpen||plateState!=='incubator'))continue;if(m.requiresFridge&&!fridgeOpen&&m.mesh.position.z<3.3)continue;if(camera.position.distanceTo(m.mesh.position)>3.2)continue;const hit=ray.intersectObject(m.mesh,true);if(hit.length)candidates.push({distance:hit[0].distance,fn:()=>setHeld(m.name,m.mesh)})}candidates.sort((a,b)=>a.distance-b.distance);if(candidates.length){candidates[0].fn();return true}return false}
+let plateState='incubator',workflow=0;
+// The user-requested PBS wash is a teaching interaction, not a condition specified in the quoted paper.
+const aspirationTool=new T.Group();aspirationTool.position.set(-6.48,1.3,-4.37);scene.add(aspirationTool);
+cyl(.045,.037,.43,0,.19,0,0x66b7cf,aspirationTool);cyl(.017,.009,.32,0,-.17,0,0xe8f4fb,aspirationTool);
+const pbsBottle=bottle(-4.8,1.06,-4.38,0xa5d9ef);
+// A wall cabinet stores a NEW, individually paper-wrapped sterile serological pipette.
+const sterileCabinet=new T.Group();sterileCabinet.position.set(-3.45,2.00,-5.48);scene.add(sterileCabinet);
+box(.94,.78,.42,0,0,0,0xe4edf2,sterileCabinet);box(.82,.64,.025,0,0,.23,0x87b8cb,sterileCabinet);
+box(.08,.26,.05,.34,0,.27,0x355a72,sterileCabinet);
+label('STERILE PIPETTES',-3.45,2.52,-5.18,.125);
+const wrappedPipette=new T.Group();wrappedPipette.position.set(-3.45,1.93,-5.18);scene.add(wrappedPipette);
+const wrapper=box(.11,.61,.065,0,0,0,0xf5f3eb,wrappedPipette);wrapper.rotation.z=-.17;
+for(let i=0;i<5;i++)box(.112,.012,.07,0,-.23+i*.11,.003,0x94b8c8,wrappedPipette).rotation.z=-.17;
+wrappedPipette.visible=false;
+// White-and-blue electronic pipette controller, modeled after the supplied reference.
+const pipetteController=new T.Group();pipetteController.position.set(-5.17,1.27,-4.40);scene.add(pipetteController);
+box(.46,.21,.20,.05,.31,0,0xf5f7f9,pipetteController);box(.29,.10,.21,.03,.44,0,0xa6dcf5,pipetteController);
+const grip=box(.19,.52,.19,.23,-.02,0,0xeaf0f3,pipetteController);grip.rotation.z=.22;
+box(.16,.10,.012,.23,.36,.11,0x172d45,pipetteController);cyl(.065,.065,.065,-.18,.26,0,0x64b5e5,pipetteController);
+for(let i=0;i<2;i++)cyl(.04,.04,.04,.10,-.05-i*.12,.12,0x66b9e9,pipetteController);
+// Long, slender 10 mL serological pipette with graduations; initially separate until attached by the player.
+const washPipette=new T.Group();washPipette.position.set(-5.17,1.27,-4.40);scene.add(washPipette);
+const tubeMaterial=new T.MeshStandardMaterial({color:0xe8f9ff,transparent:true,opacity:.48,roughness:.18,side:T.DoubleSide});
+const barrel=new T.Mesh(new T.CylinderGeometry(.024,.024,.94,12),tubeMaterial);barrel.position.set(-.20,-.26,0);washPipette.add(barrel);
+cyl(.033,.026,.09,-.20,.25,0,0xf8fbfc,washPipette);cyl(.014,.003,.23,-.20,-.83,0,0xe6f5fa,washPipette);
+for(let i=0;i<20;i++){const tick=box(i%5===0?.046:.027,.006,.008,-.20,-.65+i*.043,.026,0x2b5871,washPipette);}
+washPipette.visible=false;pipetteController.visible=false;
+// Distinct dark bottle and green cap, based on the user's Laemmli buffer reference.
+const laemmliBottle=new T.Group();laemmliBottle.position.set(-4.15,1.08,-4.36);scene.add(laemmliBottle);
+cyl(.19,.19,.46,0,.25,0,0x29283f,laemmliBottle);cyl(.16,.16,.16,0,.57,0,0x10a76c,laemmliBottle);
+box(.34,.26,.025,0,.25,.185,0xf6d633,laemmliBottle);
+label('2× LAEMMLI',-4.15,1.83,-4.30,.12);
+const lysisPipette=new T.Group();lysisPipette.position.set(-3.83,1.15,-4.34);scene.add(lysisPipette);
+cyl(.021,.021,.78,0,.4,0,0xe4f8ff,lysisPipette);cyl(.013,.003,.18,0,-.06,0,0xc7eaf8,lysisPipette);
+for(let j=0;j<12;j++)box(j%3===0?.047:.027,.005,.008,.018,.12+j*.042,.022,0x234a65,lysisPipette);
+label('FRESH TRANSFER PIPETTE',-3.68,1.84,-4.3,.09);
+label('PBS',-4.8,1.86,-4.34,.15);label('PIPETTE CONTROLLER',-5.2,1.85,-4.34,.105);
+let cabinetOpened=false,sterileUnwrapped=false,pipetteAttached=false;
+function openSterileCabinet(){cabinetOpened=true;sterileCabinet.children[2].visible=false;wrappedPipette.visible=true;msg('Cabinet opened! Click the paper-wrapped sterile serological pipette to take out a fresh one.');updateGuide()}
+function unwrapSterilePipette(){if(!cabinetOpened)return msg('Open the sterile pipette cabinet first.');sterileUnwrapped=true;wrappedPipette.visible=false;washPipette.visible=false;pipetteController.visible=true;msg('✓ Fresh sterile pipette removed from its paper wrapper. Now click the electronic pipette controller to ATTACH the pipette.');updateGuide()}
+let aspiratorHeld=false, aspiratedCount=0, pbsRemovedCount=0, hoverWell=-1, washPipetteHeld=false, pipetteLoaded=false, washedCount=0;
+const PBS_CAPACITY=10, PBS_PER_WELL=PBS_CAPACITY/24;let pbsRemaining=0;
+const pbsPanel=document.getElementById('pbsPanel');
+const pbsFluid3d=cyl(.016,.016,.03,-.20,-.28,0,0x3abbed,washPipette);pbsFluid3d.material.transparent=true;pbsFluid3d.material.opacity=.88;
+function updatePBSGraphic(animateFill=false){pbsPanel.style.display=washPipetteHeld?'block':'none';let fraction=Math.max(0,Math.min(1,pbsRemaining/PBS_CAPACITY));const h=124*fraction;document.getElementById('pbsFluid').setAttribute('y',String(142-h));document.getElementById('pbsFluid').setAttribute('height',String(h));document.getElementById('pbsVolume').textContent=pbsRemaining.toFixed(2)+' / 10.00 mL';document.getElementById('pbsProgress').textContent='PBS delivered: '+washedCount+' / 24 wells · '+(PBS_PER_WELL).toFixed(2)+' mL per well (game model)';pbsFluid3d.visible=washPipetteHeld&&fraction>.001;pbsFluid3d.scale.y=Math.max(.01,fraction*15);pbsFluid3d.position.y=-.28-(1-fraction)*.19;if(animateFill){pbsPanel.classList.remove('filling');void pbsPanel.offsetWidth;pbsPanel.classList.add('filling');setTimeout(()=>pbsPanel.classList.remove('filling'),1500)}}
+function returnAspirator(){aspiratorHeld=false;hoverWell=-1;aspirationTool.position.set(-6.48,1.3,-4.37);document.getElementById('held').textContent='Nothing';msg('✓ Aspirator returned to its holder.');updateGuide();closePlateZoom()}
+function returnPipette(){washPipetteHeld=false;pipetteLoaded=false;pbsRemaining=0;updatePBSGraphic();washPipette.position.set(-5.17,1.27,-4.40);pipetteController.position.set(-5.17,1.27,-4.40);document.getElementById('held').textContent='Nothing';msg('Wash pipette returned to its holder.');updateGuide();closePlateZoom()}
+function pickWashPipette(){if(sterileUnwrapped&&!pipetteAttached){pipetteAttached=true;washPipette.visible=true;msg('✓ Serological pipette clicked into the electronic controller! Click the controller again to pick up the assembled pipette.');updateGuide();return;}if(workflow<2)return msg('First aspirate the culture medium.');if(!sterileUnwrapped)return msg('Open the sterile pipette cabinet and unwrap a fresh serological pipette first.');if(!pipetteAttached)return msg('Attach the fresh serological pipette to the controller first.');if(aspiratorHeld)return msg('Return the aspirator to its holder first (G or click holder).');if(washPipetteHeld)return msg('Pipette already in your hand.');if(held)return msg('Place your other object first.');washPipetteHeld=true;pipetteController.visible=true;updatePBSGraphic();document.getElementById('held').textContent='Wash pipette';msg('Pipette picked up. Click the nearby PBS bottle to draw PBS into the pipette.');updateGuide();openPlateZoom()}
+function loadPBS(){if(!pipetteAttached)return msg('First attach the fresh serological pipette to the electronic controller.');if(!washPipetteHeld)return msg('Pick up the assembled pipette controller first.');if(workflow!==2&&workflow!==3)return msg('Finish aspirating the culture media first.');pbsRemaining=PBS_CAPACITY;pipetteLoaded=true;workflow=3;updatePBSGraphic(true);openPlateZoom();msg('✓ 10 mL PBS drawn into the pipette! The blue level rises. Dispense into all 24 wells without refilling.');updateGuide()}
+function dispensePBS(){if(!washPipetteHeld||workflow!==3)return false;aimWashPipette();if(!pipetteLoaded){msg('The pipette is empty. Click the PBS bottle to fill 10 mL.');return true}if(hoverWell<0){msg('Aim the pipette tip over one of the 24 wells.');return true}const w=culturePlate.wells[hoverWell];if(!w.aspirated){msg('This well has not been aspirated.');return true}if(w.washed){msg('That well already contains PBS.');return true}w.washed=true;w.liquid.visible=true;w.liquid.material.color.set(0x91cddd);washedCount++;pbsRemaining=Math.max(0,PBS_CAPACITY-washedCount*PBS_PER_WELL);pipetteLoaded=pbsRemaining>.0001;updatePBSGraphic();msg('✓ PBS dispensed into '+washedCount+'/24 wells. '+pbsRemaining.toFixed(2)+' mL remaining.');if(washedCount===24){workflow=4;msg('✓ All 24 wells contain PBS. Return the pipette, then pick up the aspirator again to remove PBS.');}updateGuide();return true}
+function aimWashPipette(){if(!washPipetteHeld)return;wellRay.setFromCamera(pointer,camera);const hit=new T.Vector3();if(wellRay.ray.intersectPlane(aspiratePlane,hit)){const pos=culturePlate.mesh.position;const x=Math.max(pos.x-.43,Math.min(pos.x+.43,hit.x));const z=Math.max(pos.z-.31,Math.min(pos.z+.31,hit.z));washPipette.position.set(x,1.65,z);pipetteController.position.set(x+.21,1.96,z);let nearest=-1,best=.075;culturePlate.wells.forEach((w,i)=>{const d=Math.hypot(x-(pos.x+w.x),z-(pos.z+w.z));if(d<best){best=d;nearest=i}});hoverWell=nearest;culturePlate.wells.forEach((w,i)=>w.rim.material.color.set(i===nearest?0xffd247:0xf4ffff))}}
+
+const wellRay=new T.Raycaster(), aspiratePlane=new T.Plane(new T.Vector3(0,1,0),-1.22);
+function pickAspirator(){if(workflow!==1&&workflow!==4)return msg('The aspirator is used to remove media and, after washing, PBS.');if(held||washPipetteHeld)return msg('Return your current tool first.');aspiratorHeld=true;document.getElementById('held').textContent='Aspirator';msg('Aspirator picked up! Use the enlarged plate view to position the tip precisely.');updateGuide();openPlateZoom()}
+function aimAspirator(){if(!aspiratorHeld)return;
+ wellRay.setFromCamera(pointer,camera);const hit=new T.Vector3();
+ if(wellRay.ray.intersectPlane(aspiratePlane,hit)){
+  const platePos=culturePlate.mesh.position;const x=Math.max(platePos.x-.43,Math.min(platePos.x+.43,hit.x));const z=Math.max(platePos.z-.31,Math.min(platePos.z+.31,hit.z));
+  aspirationTool.position.set(x,1.52,z);
+  let nearest=-1,best=.07;
+  culturePlate.wells.forEach((w,i)=>{const d=Math.hypot(x-(platePos.x+w.x),z-(platePos.z+w.z));if(d<best){best=d;nearest=i}});
+  hoverWell=nearest;
+  culturePlate.wells.forEach((w,i)=>w.rim.material.color.set(i===nearest?0xffd247:0xf4ffff));
+ }
+}
+function aspirateAtPointer(){if(!aspiratorHeld||(workflow!==1&&workflow!==4))return false;
+ aimAspirator();if(hoverWell<0){msg('Aim the aspirator tip over a well in the plate.');return true}
+ const w=culturePlate.wells[hoverWell];if(workflow===4){if(!w.washed||w.pbsRemoved){msg('Choose a well still containing blue PBS.');return true}w.pbsRemoved=true;w.liquid.visible=false;pbsRemovedCount++;msg('✓ PBS removed from '+pbsRemovedCount+'/24 wells.');if(pbsRemovedCount===24){workflow=5;msg('✓ PBS removed from every well. Return the aspirator before the Laemmli stage.')}updateGuide();return true}if(w.aspirated){msg('That well is already empty. Aim at another pink well.');return true}
+ w.aspirated=true;w.liquid.visible=false;aspiratedCount++;
+ msg('✓ Aspirated well '+aspiratedCount+' / 24. '+(aspiratedCount<24?'Move the tip over another pink well.':'All wells emptied!'));
+ if(aspiratedCount===24){workflow=2;updateGuide();msg('✓ All wells aspirated. Return the aspirator with G, then pick up the wash pipette.')}
+ return true;
+}
+function advanceWorkflow(){if(workflow===0&&plateState==='hood'){workflow=1;msg('✓ Plate placed in hood. Pick up the aspirator and click EACH well to remove its media.');}
+ updateGuide()}
+interact('Aspirator',-6.5,1.35,-4.38,2.4,()=>{if(aspiratorHeld)return returnAspirator();pickAspirator()});
+interact('PBS wash bottle',-4.8,1.35,-4.38,2.4,()=>loadPBS());
+interact('Sterile pipette cabinet',-3.45,2,-5.18,2.7,()=>openSterileCabinet());
+interact('Wrapped sterile pipette',-3.45,1.93,-5.18,2.7,()=>unwrapSterilePipette());
+interact('Wash pipette',-5.18,1.4,-4.39,2.4,()=>{if(washPipetteHeld)return returnPipette();pickWashPipette()});
+let keys={},yaw=0,pitch=0,started=false;
+const guideSteps=[
+ ['CO₂ incubator','Click the glowing CO₂ incubator to OPEN its door.'],
+ ['24-well plate','Click the culture plate INSIDE the open incubator to pick it up.'],
+ ['Biosafety cabinet','Carry the plate to the hood and click the glowing placement pad.'],
+ ['Aspirator','Pick up the aspirator, point its tip at the 24 wells, and CLICK each pink well to aspirate it.'],
+ ['Sterile pipette cabinet','Return the aspirator (G), open the sterile pipette cabinet, unwrap a fresh pipette, attach it to the controller, then pick up the assembly.'],
+ ['PBS wash bottle','Click the PBS bottle to fill the pipette with 10 mL once, then dispense into all 24 wells.'],
+ ['Aspirator','Return the PBS pipette, pick up the aspirator again, and remove the blue PBS from all 24 wells.'],
+ ['Laemmli sample buffer','After aspirating all PBS, return the aspirator and continue to the Laemmli stage.']
+];let guideIndex=0;const bubble=document.getElementById('targetBubble');
+function currentGuide(){const name=workflow===4?'Aspirator':workflow===2?(aspiratorHeld?'Aspirator':!cabinetOpened?'Sterile pipette cabinet':!sterileUnwrapped?'Wrapped sterile pipette':'Wash pipette'):guideSteps[Math.min(guideIndex,guideSteps.length-1)][0];return interactions.find(a=>a.name===name)}
+function updateGuide(){guideIndex=workflow===0?(held==='24-well plate'?2:incubatorOpen?1:0):workflow===1?3:workflow===2?4:workflow===3?5:workflow===4?6:7;const done=guideIndex>=guideSteps.length;if(workflow===1&&aspiratorHeld)guideSteps[3][1]='Aim at each well and click to aspirate ('+aspiratedCount+'/24). Press G to return the aspirator.';if(workflow===2)guideSteps[4][1]=aspiratorHeld?'Press G to return the aspirator.':!cabinetOpened?'Open the highlighted sterile pipette cabinet.':!sterileUnwrapped?'Click the paper-wrapped pipette to unwrap a fresh one.':!pipetteAttached?'Click the controller to attach the fresh pipette.':'Click the controller again to pick up the assembled pipette.';if(workflow===4)guideSteps[6][1]='Remove PBS from each well ('+pbsRemovedCount+'/24). '+(washPipetteHeld?'Return the wash pipette with G first.':aspiratorHeld?'Click each blue well to aspirate PBS.':'Pick up the aspirator again.');if(workflow===5)guideSteps[7][1]=aspiratorHeld?'Return the aspirator with G.':'Click the Laemmli bottle to start the next stage.';if(workflow===3)guideSteps[5][1]='PBS wash '+washedCount+'/24 wells. '+(pipetteLoaded?'Aim at an empty well and click to dispense.':'Click the PBS bottle to load 10 mL once.');document.getElementById('guideTitle').textContent=done?'🎉 GUIDED TOUR COMPLETE':`GUIDED WESTERN BLOT · ${guideIndex+1} / ${guideSteps.length}`;document.getElementById('guideText').textContent=done?'You explored the protocol steps supplied so far. Antibody and detection conditions were not supplied.':guideSteps[guideIndex][1];bubble.style.display='none'}
+function completeGuide(a){updateGuide()}
+function guidedClick(a){if(!a)return;a.fn();completeGuide(a)}
+function showTarget(){let a=currentGuide();if(!a||guideIndex>=guideSteps.length)return;
+ // Move near the station and face its highlighted target, making the next click straightforward.
+ let dx=a.pos.x-camera.position.x,dz=a.pos.z-camera.position.z;
+ if(Math.hypot(dx,dz)>a.dist*.75){let offset=new T.Vector3(0,0,1.25);if(a.pos.z>3)offset.z=-1.3;if(a.pos.z< -3)offset.z=1.3;camera.position.set(a.pos.x+offset.x,1.65,a.pos.z+offset.z);camera.position.x=Math.max(-9.5,Math.min(9.5,camera.position.x));camera.position.z=Math.max(-5.4,Math.min(5.4,camera.position.z));}
+ dx=a.pos.x-camera.position.x;dz=a.pos.z-camera.position.z;yaw=Math.atan2(-dx,-dz);pitch=Math.atan2(a.pos.y-camera.position.y,Math.hypot(dx,dz));updateHover();}
+document.getElementById('findTarget').onclick=showTarget;document.getElementById('skipTarget').onclick=()=>{guideIndex=Math.min(guideIndex+1,guideSteps.length);updateGuide()};bubble.onclick=()=>{if(guideIndex===2&&held==='24-well plate'){const a=placementPads.find(p=>p.name==='Inside biosafety cabinet');if(camera.position.distanceTo(a.pos)>a.dist){showTarget();msg('Move closer to the hood and click the glowing placement pad.');}else placeAt(a);updateGuide();return;}const a=currentGuide();if(a)guidedClick(a)};updateGuide();
+const start=document.getElementById('start');start.onclick=()=>{document.getElementById('overlay').style.display='none';started=true;showTarget()};
+function aimed(){
+ pickRay.setFromCamera(pointer,camera);
+ let hits=pickRay.intersectObjects(pickTargets,false);
+ for(const hit of hits){const a=hit.object.userData.interaction;if(camera.position.distanceTo(a.pos)<a.dist)return a}
+ return null;
+}
+function updateHover(){
+ const a=aimed();if(hovered!==a){if(hovered)hovered.marker.material.opacity=0;hovered=a;if(hovered)hovered.marker.material.opacity=.33}
+ const p=document.getElementById('prompt');p.style.display=a?'block':'none';if(a)p.textContent='🖱 Click · '+a.name;
+ renderer.domElement.style.cursor=(a||held)?'pointer':'grab';
+ const g=currentGuide();if(g&&guideIndex<guideSteps.length){g.marker.material.opacity=.55;const v=g.pos.clone().project(camera);const visible=v.z>-1&&v.z<1&&Math.abs(v.x)<.92&&Math.abs(v.y)<.88; bubble.style.display=visible?'block':'none';if(visible){bubble.style.left=((v.x+1)/2*innerWidth)+'px';bubble.style.top=((-v.y+1)/2*innerHeight)+'px';bubble.textContent='👆 '+g.name}}else bubble.style.display='none';
+}
+// PRIORITY 3D CONTROLS: registered before all other canvas click handlers.
+// A hit consumes the event; a miss leaves ordinary lab interactions untouched.
+(function installPriorityWaterControls(){
+ const waterRay=new T.Raycaster(), waterPointer=new T.Vector2();
+ renderer.domElement.addEventListener('click',function(e){
+  if(!started)return;
+  const rect=renderer.domElement.getBoundingClientRect();
+  if(!rect.width||!rect.height)return;
+  waterPointer.set(2*(e.clientX-rect.left)/rect.width-1,1-2*(e.clientY-rect.top)/rect.height);
+  // Synchronize camera rotation with the movement controller BEFORE raycasting.
+  camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;
+  camera.updateMatrixWorld(true);camera.updateProjectionMatrix();
+  const candidates=[
+   {mesh:window.labShowerTarget,toggle:window.prototypeToggleShower,name:'Shower'},
+   {mesh:window.labFaucetTarget,toggle:window.prototypeToggleFaucet,name:'Faucet'}
+  ];
+  waterRay.setFromCamera(waterPointer,camera);
+  let best=null;
+  for(const item of candidates){
+   if(!item.mesh||typeof item.toggle!=='function'||!item.mesh.visible)continue;
+   item.mesh.updateWorldMatrix(true,false);
+   const hits=waterRay.intersectObject(item.mesh,false);
+   if(hits.length&&(!best||hits[0].distance<best.distance))best={...item,distance:hits[0].distance};
+  }
+  // Screen-space tolerance for the shower pull ring, matching its visible red sphere.
+  // Only accept points in front of the camera and inside the projected target radius.
+  if(!best&&window.labShowerTarget&&typeof window.prototypeToggleShower==='function'){
+   const mesh=window.labShowerTarget;
+   const center=mesh.getWorldPosition(new T.Vector3());
+   const view=center.clone().applyMatrix4(camera.matrixWorldInverse);
+   const projected=center.clone().project(camera);
+   if(view.z<-.1&&projected.z>=-1&&projected.z<=1){
+    const f=rect.height/(2*Math.tan(T.MathUtils.degToRad(camera.fov)/2));
+    const radius=Math.max(22,Math.min(120,.48*f/-view.z));
+    const dx=(waterPointer.x-projected.x)*rect.width/2;
+    const dy=(waterPointer.y-projected.y)*rect.height/2;
+    if(Math.hypot(dx,dy)<=radius)best={name:'Shower',toggle:window.prototypeToggleShower};
+   }
+  }
+  if(!best)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  best.toggle();
+  const status=document.getElementById('prototypeStatus');
+  if(status)status.textContent=best.name+' clicked in the 3D scene';
+ },true);
+})();
+renderer.domElement.addEventListener('click',()=>{
+ if(!started)return;
+ if(dispensePBS())return;if(aspirateAtPointer())return;if(physicalClick()){updateGuide();return;}const a=aimed();if(a){guidedClick(a);return}
+});
+let dragging=false,lastX=0,lastY=0;renderer.domElement.addEventListener('pointerdown',e=>{if(e.button===0){dragging=true;lastX=e.clientX;lastY=e.clientY}});document.addEventListener('pointerup',()=>dragging=false);
+document.addEventListener('mousemove',e=>{
+ if(document.pointerLockElement===renderer.domElement){yaw-=e.movementX*.0025;pitch=Math.max(-1.5,Math.min(1.5,pitch-e.movementY*.0025));pointer.set(0,0)}
+ else {if(dragging){yaw-=(e.clientX-lastX)*.004;pitch=Math.max(-1.45,Math.min(1.45,pitch-(e.clientY-lastY)*.004));lastX=e.clientX;lastY=e.clientY}const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1)}
+});
+document.addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='KeyE'){let a=aimed()||nearest();if(a)guidedClick(a)}if(e.code==='KeyG'){if(aspiratorHeld)returnAspirator();else if(washPipetteHeld)returnPipette();else drop()}});
+document.addEventListener('keyup',e=>keys[e.code]=false);
+function nearest(){let best=null,bd=2.1;for(let a of interactions){let d=camera.position.distanceTo(a.pos);if(d<a.dist&&d<bd){best=a;bd=d}}return best}
+interactions=interactions.filter(a=>!['Centrifuge','Eppendorf-style microcentrifuge tube','Pipette rack','Gel electrophoresis tank','Membrane transfer station','Blot imager'].includes(a.name));
+const map=document.getElementById('minimap'),ctx=map.getContext('2d');function drawMap(){ctx.clearRect(0,0,360,250);ctx.fillStyle='#173547';ctx.fillRect(0,0,360,250);ctx.strokeStyle='#a5d6e1';ctx.lineWidth=4;ctx.strokeRect(8,8,344,234);ctx.beginPath();ctx.moveTo(180,8);ctx.lineTo(180,82);ctx.moveTo(180,168);ctx.lineTo(180,242);ctx.stroke();ctx.fillStyle='#e0f4fa';ctx.font='bold 17px Arial';ctx.fillText('CULTURE',36,30);ctx.fillText('BENCH',225,30);ctx.fillStyle='#65eac1';ctx.beginPath();ctx.arc(180+(camera.position.x/20)*344,125+(camera.position.z/12)*234,7,0,Math.PI*2);ctx.fill()}
+const clock=new T.Clock();function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;if(started){let speed=(keys.ShiftLeft?5.3:3)*dt;let forward=new T.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));let right=new T.Vector3(Math.cos(yaw),0,-Math.sin(yaw));let mv=new T.Vector3();if(keys.KeyW||keys.ArrowUp)mv.add(forward);if(keys.KeyS||keys.ArrowDown)mv.sub(forward);if(keys.KeyD)mv.add(right);if(keys.KeyA)mv.sub(right);if(mv.lengthSq())mv.normalize().multiplyScalar(speed);let next=camera.position.clone().add(mv);next.x=Math.max(-9.5,Math.min(9.5,next.x));next.z=Math.max(-5.4,Math.min(5.4,next.z));if((camera.position.x<-.42&&next.x>=-.42||camera.position.x>.42&&next.x<=.42)&&Math.abs(next.z)>2.1)next.x=camera.position.x;if(Math.abs(next.x)<.43&&Math.abs(next.z)>2.12)next.x=camera.position.x;camera.position.copy(next);camera.position.y=1.65;document.getElementById('room').textContent=camera.position.x<0?'🧫 Tissue culture room':'🧪 Western blot bench room';updateHover();if(aspiratorHeld)aimAspirator();if(washPipetteHeld)aimWashPipette();if(held&&carryMesh){let p=new T.Vector3(.38,-.36,-.8).applyQuaternion(camera.quaternion).add(camera.position);carryMesh.position.copy(p);carryMesh.rotation.y=yaw}for(const a of placementPads){const active=!!held&&a.accept.includes(held);a.group.visible=active;a.ring.rotation.z+=dt*.8}drawMap()}renderer.render(scene,camera)}animate();window.onresize=()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)};
+</script>
+<style>
+#plateZoom{position:fixed;inset:0;z-index:12;background:#061623ee;display:none;align-items:center;justify-content:center;padding:16px;overflow:auto}
+#zoomCard{width:min(1050px,97vw);background:#122d40;border:2px solid #8ad2e5;border-radius:20px;padding:18px;box-shadow:0 15px 60px #000a}
+#zoomHead{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+#zoomHead h2{margin:0;color:#b8f5ed;font-size:20px}
+#zoomHead button{padding:10px 13px}
+#zoomStatus{margin:12px 0;color:#ccebf4;font-size:14px}
+#zoomPlate{position:relative;margin:14px auto 10px;width:min(780px,90vw);aspect-ratio:1.7;background:linear-gradient(140deg,#f8ffffed,#b9d5e3e8);border:16px solid #eaf9fc;border-radius:30px;box-shadow:inset 0 0 0 5px #91b4c5,0 12px 30px #0009;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:clamp(5px,1.5vw,17px);padding:clamp(12px,2.5vw,30px);cursor:none}
+.zoomWell{position:relative;min-width:0;border-radius:50%;border:clamp(4px,.8vw,9px) solid #dcecf4;box-shadow:inset 0 8px 15px #15364c99,0 3px 5px #55768c;cursor:none;background:radial-gradient(ellipse at 45% 60%,#e1a6d4 0%,#bb70ad 55%,#7d467d 95%);transition:background .2s,transform .15s}
+.zoomWell:hover{outline:5px solid #ffce46;transform:scale(1.035)}
+.zoomWell.empty{background:radial-gradient(ellipse at 45% 60%,#a1b8c9 0%,#698ba4 80%)}
+.zoomWell.pbs{background:radial-gradient(ellipse at 45% 60%,#c4f4ff 0%,#63bddf 80%)}
+.zoomWell::after{content:attr(data-well);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#183747;font-size:clamp(10px,1.2vw,16px);font-weight:900;pointer-events:none}
+#zoomTip{position:absolute;z-index:4;pointer-events:none;left:50%;top:30%;transform:translate(-50%,-100%);filter:drop-shadow(1px 4px 3px #0007)}
+#zoomTip .shaft{width:13px;height:94px;margin:auto;border:2px solid #718b9b;border-radius:6px 6px 2px 2px;background:linear-gradient(90deg,#eefaff,#a7d4e6,#fff);position:relative;overflow:hidden}
+#zoomTip .fluid{position:absolute;bottom:0;left:2px;right:2px;height:0;background:#62c9ec;transition:height .25s}
+#zoomTip .point{margin:auto;width:6px;height:36px;background:linear-gradient(90deg,#a7d0e2,#fff);clip-path:polygon(0 0,100% 0,55% 100%,45% 100%)}
+#zoomActions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+#zoomActions button{font-size:14px}
+#zoomVolume{font-weight:800;color:#b4f3ff}
+</style>
+<div id="plateZoom" aria-label="Magnified 24-well plate work area"><div id="zoomCard"><div id="zoomHead"><h2>🔬 Close-up: 24-well culture plate</h2><button id="zoomClose">Return to 3D room</button></div><div id="zoomStatus">Move the tip over a well and click.</div><div id="zoomPlate"><div id="zoomTip"><div class="shaft"><div class="fluid" id="zoomTipFluid"></div></div><div class="point"></div></div></div><div id="zoomActions"><button id="zoomLoad">Draw 10 mL PBS from bottle</button><button id="zoomReturn">Put tool back (G)</button><span id="zoomVolume"></span></div><p style="text-align:center;color:#b6d1dd;font-size:12px;margin-bottom:0">Enlarged work view for accurate targeting · Game simulation · 10 mL divided across 24 wells</p></div></div>
+<script>
+const zoomRoot=document.getElementById('plateZoom'),zoomPlate=document.getElementById('zoomPlate');
+const zoomTip=document.getElementById('zoomTip');
+function refreshPlateZoom(){
+ const active=aspiratorHeld||washPipetteHeld;
+ document.getElementById('zoomLoad').style.display=washPipetteHeld?'inline-block':'none';
+ document.getElementById('zoomStatus').textContent=aspiratorHeld?(workflow===4?'Aspirator: click each blue well to remove PBS. '+pbsRemovedCount+'/24 cleared.':'Aspirator: click each pink well to remove media. '+aspiratedCount+'/24 emptied.'):washPipetteHeld?(pipetteLoaded?'PBS loaded: click each empty well to dispense. '+washedCount+'/24 washed.':'Pipette ready: click “Draw 10 mL PBS from bottle” below.'):'Pick up a tool first.';
+ document.getElementById('zoomVolume').textContent=washPipetteHeld?pbsRemaining.toFixed(2)+' mL remaining':'';
+ document.getElementById('zoomTipFluid').style.height=(washPipetteHeld?Math.max(0,pbsRemaining/PBS_CAPACITY)*90:0)+'%';
+ Array.from(zoomPlate.querySelectorAll('.zoomWell')).forEach((el,i)=>{const w=culturePlate.wells[i];el.classList.toggle('empty',w.aspirated&&(!w.washed||w.pbsRemoved));el.classList.toggle('pbs',!!w.washed&&!w.pbsRemoved)});
+}
+function openPlateZoom(){if(plateState!=='hood'||(!aspiratorHeld&&!washPipetteHeld))return;zoomRoot.style.display='flex';refreshPlateZoom()}
+function closePlateZoom(){zoomRoot.style.display='none'}
+for(let i=0;i<24;i++){
+ const el=document.createElement('div');el.className='zoomWell';el.dataset.well=String.fromCharCode(65+Math.floor(i/6))+(i%6+1);
+ el.addEventListener('click',()=>{
+  const w=culturePlate.wells[i];
+  if(aspiratorHeld&&workflow===4){if(!w.washed||w.pbsRemoved){msg('This well has no PBS left.');return}w.pbsRemoved=true;w.liquid.visible=false;pbsRemovedCount++;if(pbsRemovedCount===24){workflow=5;msg('All PBS removed! Return the aspirator before continuing to Laemmli buffer.')}else msg('PBS removed from well '+el.dataset.well+'.');updateGuide()}
+  else if(aspiratorHeld&&workflow===1){if(w.aspirated){msg('This well is already empty.');return}w.aspirated=true;w.liquid.visible=false;aspiratedCount++;if(aspiratedCount===24){workflow=2;msg('All 24 wells aspirated! Return the aspirator, then collect the sterile pipette.');}else msg('Media removed from well '+el.dataset.well+'.');updateGuide()}
+  else if(washPipetteHeld&&workflow===3){if(!pipetteLoaded){msg('Draw 10 mL of PBS first.');return}if(!w.aspirated){msg('Aspirate this well first.');return}if(w.washed){msg('Already washed.');return}w.washed=true;w.liquid.visible=true;w.liquid.material.color.set(0x91cddd);washedCount++;pbsRemaining=Math.max(0,PBS_CAPACITY-washedCount*PBS_PER_WELL);pipetteLoaded=pbsRemaining>.0001;updatePBSGraphic();if(washedCount===24){workflow=4;msg('All 24 wells washed! Return the pipette, then use the aspirator to remove PBS from all 24 wells.')}else msg('PBS dispensed into '+el.dataset.well+'.');updateGuide()}
+  refreshPlateZoom();
+ });zoomPlate.appendChild(el);
+}
+zoomPlate.addEventListener('pointermove',e=>{const r=zoomPlate.getBoundingClientRect();zoomTip.style.left=Math.max(15,Math.min(r.width-15,e.clientX-r.left))+'px';zoomTip.style.top=Math.max(125,Math.min(r.height-10,e.clientY-r.top))+'px'});
+document.getElementById('zoomClose').onclick=closePlateZoom;
+document.getElementById('zoomLoad').onclick=()=>{loadPBS();refreshPlateZoom()};
+document.getElementById('zoomReturn').onclick=()=>{if(aspiratorHeld)returnAspirator();else if(washPipetteHeld)returnPipette();refreshPlateZoom()};
+document.addEventListener('keydown',e=>{if(e.code==='Escape')closePlateZoom()});
+</script>
+
+<style>
+#lysisOverlay{position:fixed;inset:0;z-index:120;background:#04131de9;display:none;align-items:center;justify-content:center;padding:18px;color:#eafaff;font-family:system-ui}
+#lysisCard{width:min(850px,96vw);max-height:94vh;overflow:auto;background:#122b3c;border:2px solid #73c6d5;border-radius:20px;padding:20px;box-shadow:0 20px 80px #000a}
+#lysisCard button{background:#236c8d;color:white;border:1px solid #85d6ef;padding:11px 14px;border-radius:9px;cursor:pointer;font-weight:700;margin:5px}
+#lysisCard button:disabled{opacity:.38;cursor:not-allowed}
+#lysisGrid{display:grid;grid-template-columns:repeat(6,minmax(35px,1fr));gap:8px;margin:14px auto;max-width:650px}
+.lysisWell{aspect-ratio:1;border:5px solid #d3e9ed;border-radius:50%;background:#9bd8e7;display:flex;align-items:center;justify-content:center;color:#123e52;cursor:pointer;font-weight:800;box-shadow:inset 0 5px 10px #16465a55}
+.lysisWell.done{background:#745d9d;color:white}.lysisWell:hover{outline:3px solid #f9df6a}
+#lysisBar{height:16px;border-radius:20px;border:1px solid #9ad6ed;background:#1d4256;overflow:hidden;margin-top:8px}
+#lysisFill{height:100%;width:0%;background:linear-gradient(90deg,#a37fe4,#e7a4ff);transition:width .25s}
+</style>
+<div id="lysisOverlay"><div id="lysisCard">
+<h2>🧪 Next step: Laemmli buffer and cell lysis</h2>
+<p id="lysisInstruction">Return the PBS pipette, then collect a new transfer pipette and the Laemmli buffer bottle.</p>
+<div><button id="lysisFresh">1 · Get a fresh pipette</button><button id="lysisAttach" disabled>2 · Attach to controller</button><button id="lysisDraw" disabled>3 · Draw Laemmli buffer</button><button id="lysisBack">Return to lab</button></div>
+<p id="lysisMeter">Buffer in pipette: 0.00 mL · Wells treated: 0 / 24</p><div id="lysisBar"><div id="lysisFill"></div></div>
+<div id="lysisGrid"></div><p style="font-size:12px;color:#b7d2df">Educational game representation: the source protocol describes solubilizing collected cell pellets in 200 µL Laemmli buffer with fresh β-mercaptoethanol and protease inhibitors, not adding buffer directly to 24 culture wells. The 24-well action here is a requested gameplay simplification.</p>
+</div></div>
+<script>
+const lysisOverlay=document.getElementById('lysisOverlay');let freshLysis=false,attachedLysis=false,loadedLysis=false,lysisDone=0;
+const lysisTotal=4.8,lysisPerWell=.2;const lysisCells=[];
+function refreshLysis(){const remaining=loadedLysis?Math.max(0,lysisTotal-lysisDone*lysisPerWell):0;
+ document.getElementById('lysisAttach').disabled=!freshLysis;
+ document.getElementById('lysisDraw').disabled=!attachedLysis;
+ document.getElementById('lysisMeter').textContent='Buffer in pipette: '+remaining.toFixed(2)+' mL · Wells treated: '+lysisDone+' / 24';
+ document.getElementById('lysisFill').style.width=(remaining/lysisTotal*100)+'%';
+ document.getElementById('lysisInstruction').textContent=lysisDone===24?'✓ All 24 wells treated in this simulation.':!freshLysis?'Take a new, sterile pipette from the cabinet.':!attachedLysis?'Attach the fresh pipette to the electronic controller.':!loadedLysis?'Click the Laemmli bottle to draw buffer into the pipette.':'Position the pipette tip over a well and click to dispense. The purple liquid indicates Laemmli buffer.';
+}
+function openLysis(){lysisOverlay.style.display='flex';refreshLysis()}
+document.getElementById('lysisFresh').onclick=()=>{freshLysis=true;document.getElementById('lysisFresh').disabled=true;refreshLysis()};
+document.getElementById('lysisAttach').onclick=()=>{attachedLysis=true;document.getElementById('lysisAttach').disabled=true;refreshLysis()};
+document.getElementById('lysisDraw').onclick=()=>{loadedLysis=true;document.getElementById('lysisDraw').disabled=true;refreshLysis()};
+document.getElementById('lysisBack').onclick=()=>lysisOverlay.style.display='none';
+for(let i=0;i<24;i++){const well=document.createElement('div');well.className='lysisWell';well.textContent=String.fromCharCode(65+Math.floor(i/6))+(i%6+1);well.onclick=()=>{if(!loadedLysis){document.getElementById('lysisInstruction').textContent='First collect, attach, and fill the fresh pipette.';return}if(well.classList.contains('done'))return;well.classList.add('done');lysisDone++;culturePlate.wells[i].liquid.material.color.set(0x8e69b6);refreshLysis();};document.getElementById('lysisGrid').appendChild(well);}
+// After the PBS wash, returning the controller enables the next hands-on stage.
+const originalReturnAspirator=returnAspirator;returnAspirator=function(){originalReturnAspirator();if(workflow===5)msg('PBS aspiration complete. Click the Laemmli buffer bottle to continue.');};
+const originalReturnPipette=returnPipette;
+returnPipette=function(){const finished=workflow>=4;originalReturnPipette();if(finished){msg('PBS wash complete. Now pick up the aspirator to remove PBS from all 24 wells.');updateGuide()}};
+// A visible bottle in the 3D hood can also launch the new workflow.
+interact('Laemmli sample buffer',-4.15,1.5,-4.36,2.6,()=>{if(workflow<5||aspiratorHeld||washPipetteHeld)return msg('First remove PBS from all 24 wells and return the aspirator.');openLysis()});
+interact('Fresh lysis pipette',-3.83,1.5,-4.34,2.6,()=>{if(workflow<5||aspiratorHeld||washPipetteHeld)return msg('First aspirate the PBS from all 24 wells and return the aspirator.');openLysis()});
+</script>
+<script>
+// Reference-inspired freestanding central laboratory island: white counters,
+// oak drawer pedestals, overhead open shelves, utility outlets and strip lighting.
+(function(){
+ const island=new T.Group();island.position.set(5.0,0,0.15);scene.add(island);
+ const b=(w,h,d,x,y,z,c)=>box(w,h,d,x,y,z,c,island);
+ // Double-sided 5.6-metre island worktop, dark edge band and structural frame.
+ b(5.8,.12,1.75,0,.98,0,0xeff2f1);
+ b(5.85,.045,1.79,0,.91,0,0x59636a);
+ for(const x of [-2.75,0,2.75])for(const z of [-.78,.78])b(.09,.91,.09,x,.45,z,0xd6dce0);
+ // Light wood rolling drawer units on both sides.
+ for(const x of [-2.1,-.55,1.0,2.25])for(const z of [-.49,.49]){
+   b(.69,.78,.60,x,.46,z,0xbfa47f);
+   for(let k=0;k<3;k++){
+     b(.63,.205,.018,x,.72-k*.235,z+(z>0?.314:-.314),0xd2b894);
+     b(.22,.018,.025,x,.72-k*.235,z+(z>0?.333:-.333),0x7a8081);
+   }
+   for(const dx of [-.25,.25])b(.055,.075,.055,x+dx,.035,z,0x454c51);
+ }
+ // Two tall upright service columns and long horizontal shelf supports.
+ for(const x of [-2.72,0,2.72]){
+   b(.105,2.05,.13,x,2.05,0,0xe7eaeb);
+   b(.12,.09,1.62,x,2.80,0,0xe7eaeb);
+ }
+ // Long floating shelves with thin charcoal-colored edges, open on both sides.
+ for(const y of [1.87,2.30,2.73])for(const z of [-.48,.48]){
+   b(5.65,.075,.52,0,y,z,0xe9edec);
+   b(5.67,.025,.53,0,y-.05,z,0xaeb7bc);
+ }
+ // Electrical/service backsplash between the two work surfaces.
+ b(5.60,.34,.12,0,1.29,0,0xe7e9e8);
+ for(const x of [-2.1,-1.25,-.4,.45,1.3,2.15])for(const side of [-1,1]){
+   b(.24,.15,.018,x,1.32,side*.073,0xb6bfc4);
+   for(const dx of [-.055,.055])b(.028,.055,.022,x+dx,1.32,side*.089,0x3b464c);
+ }
+ // Under-shelf LED strips and a soft localized glow.
+ for(const z of [-.55,.55]){
+   const led=b(5.35,.024,.055,0,2.66,z,0xf9ffff);
+   led.material=new T.MeshBasicMaterial({color:0xf6ffff});
+ }
+ const light=new T.PointLight(0xf1faff,3.2,7);light.position.set(0,2.35,0);island.add(light);
+ // Ceiling tile lines and two long white light strips over the central island.
+ for(const z of [-1.0,1.0]){
+   const strip=b(5.65,.028,.065,0,3.06,z,0xffffff);
+   strip.material=new T.MeshBasicMaterial({color:0xffffff});
+ }
+})();
+// Cinematic, non-graphic chemistry-lab fire scene.
+(function(){
+const fireGroup=new T.Group();scene.add(fireGroup);
+const chemX=4.9,chemZ=0.65;
+// Tall, enclosed, white laboratory fume hood modeled on the supplied reference photo.
+// Front faces the visitor (+Z); raised sash and transparent glazing reveal the interior.
+const hood=new T.Group();hood.position.set(8.0,0,-3.7);scene.add(hood);
+function hb(w,h,d,x,y,z,color,parent=hood){return box(w,h,d,x,y,z,color,parent)}
+// Steel support stand and open space underneath.
+for(const x of [-1.55,1.55])for(const z of [-.62,.62])hb(.12,1.02,.12,x,.51,z,0xe4e8e8);
+hb(3.36,.13,1.55,0,1.04,0,0xd6dddf);
+hb(3.45,.12,.13,0,.20,.66,0xe5e9e9);
+hb(3.45,.12,.13,0,.20,-.66,0xe5e9e9);
+// Enclosed upper body and large projecting ventilation canopy.
+hb(3.5,1.95,.13,0,2.11,-.74,0xe6e8e7);
+hb(.16,1.95,1.55,-1.69,2.11,0,0xe8e9e7);
+hb(.16,1.95,1.55,1.69,2.11,0,0xe8e9e7);
+hb(3.75,.58,1.82,0,3.25,.08,0xf5f6f3);
+hb(3.86,.13,1.91,0,2.94,.12,0xd3d9db);
+hb(3.65,.15,.17,0,2.75,.83,0xf6f7f5);
+// Broad sash frame, two large glass windows and central upright.
+hb(.13,1.52,.10,-1.60,1.95,.79,0xdce2e4);
+hb(.13,1.52,.10,1.60,1.95,.79,0xdce2e4);
+hb(.10,1.52,.10,0,1.95,.79,0xdce2e4);
+hb(3.30,.12,.12,0,2.68,.79,0xeef2f3);
+hb(3.30,.12,.12,0,1.22,.79,0xeef2f3);
+const glass=new T.MeshStandardMaterial({color:0xb9e4ee,transparent:true,opacity:.16,roughness:.09,metalness:.12,depthWrite:false,side:T.DoubleSide});
+for(const x of [-.81,.81]){const pane=new T.Mesh(new T.PlaneGeometry(1.48,1.33),glass);pane.position.set(x,1.97,.85);hood.add(pane)}
+// Dark work chamber, interior backsplash and work surface.
+hb(3.18,.08,1.30,0,1.25,-.04,0x87999f);
+hb(3.15,1.42,.055,0,1.98,-.63,0x9ba8aa);
+for(let i=0;i<3;i++)hb(.04,.65,.04,-1.22+i*1.22,2.04,-.57,0x667b83);
+// Left vertical utility/control panel and handles.
+hb(.24,1.52,.13,-1.82,1.94,.84,0xf7f8f7);
+for(let i=0;i<4;i++)cyl(.052,.052,.06,-1.82,2.42-i*.26,.94,i%2?0x487f9b:0xe3bf55,hood);
+hb(.08,.42,.11,1.47,1.93,.92,0xe8edef);
+// Chemistry glassware inside the hood.
+const glassMat=new T.MeshStandardMaterial({color:0xa5e7f4,transparent:true,opacity:.42,metalness:.1,roughness:.13,side:T.DoubleSide});
+function flask(x,z,liquid){let g=new T.Group();g.position.set(x,1.33,z);hood.add(g);let body=new T.Mesh(new T.CylinderGeometry(.09,.23,.43,20),glassMat);body.position.y=.22;g.add(body);let neck=new T.Mesh(new T.CylinderGeometry(.075,.075,.23,20),glassMat);neck.position.y=.53;g.add(neck);cyl(.18,.18,.12,0,.1,0,liquid,g);return g}
+flask(-.85,-.1,0x45d4a4);flask(-.25,.05,0xa978ee);flask(.55,-.15,0x59b9f2);
+const hoodLight2=new T.PointLight(0xe8f8ff,4,4);hoodLight2.position.set(8.0,2.65,-3.7);scene.add(hoodLight2);
+// Stylized scientist wearing a white lab coat, goggles and dark trousers.
+const scientist=new T.Group();scientist.position.set(8.0,0,-1.55);scene.add(scientist);
+const dark=0x263646,coat=0xf2f5f4,skin=0xc88f6f;
+box(.25,.82,.27,-.18,.47,0,dark,scientist);box(.25,.82,.27,.18,.47,0,dark,scientist);
+box(.55,.87,.32,0,1.28,0,coat,scientist);
+box(.025,.78,.34,0,1.26,.015,0x9aaeb9,scientist);
+box(.19,.73,.28,-.39,1.32,0,coat,scientist).rotation.z=-.26;
+box(.19,.73,.28,.39,1.32,0,coat,scientist).rotation.z=.34;
+for(let i=0;i<3;i++)cyl(.025,.025,.012,.07,1.48-i*.17,.18,0x3b6a83,scientist);
+cyl(.21,.21,.36,0,1.99,0,skin,scientist,24);
+const hair=cyl(.215,.215,.13,0,2.2,0,0x302b2d,scientist,24);
+box(.43,.115,.12,0,2.03,.18,0xa9dcea,scientist);
+box(.1,.12,.08,-.29,1.0,0,skin,scientist);box(.1,.12,.08,.29,1.0,0,skin,scientist);
+// Flames are emissive, translucent tapered cones, with rising embers and smoke.
+const flames=[],embers=[],smoke=[];
+function fireMat(color,opacity){return new T.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending})}
+for(let i=0;i<38;i++){
+ const a=i*2.39996,r=.15+Math.sqrt(i/38)*.54;
+ const h=.42+(i%7)*.16;
+ const mesh=new T.Mesh(new T.ConeGeometry(.12+(i%4)*.035,h,7),fireMat(i%3===0?0xffe36a:i%3===1?0xff8c23:0xff3d12,.75));
+ mesh.position.set(Math.cos(a)*r,.42+(i%9)*.19,Math.sin(a)*r);mesh.rotation.z=Math.sin(a)*.24;
+ scientist.add(mesh);flames.push({mesh,phase:i*1.9,baseY:mesh.position.y});
+}
+for(let i=0;i<26;i++){
+ const m=new T.Mesh(new T.SphereGeometry(.025+(i%3)*.014,6,6),fireMat(0xffb53d,.9));scientist.add(m);embers.push({mesh:m,phase:i/26,angle:i*2.4});
+}
+for(let i=0;i<17;i++){
+ const m=new T.Mesh(new T.SphereGeometry(.17+(i%4)*.06,8,6),new T.MeshBasicMaterial({color:0x35414b,transparent:true,opacity:.16,depthWrite:false}));scientist.add(m);smoke.push({mesh:m,phase:i/17,angle:i*2.1});
+}
+const glow=new T.PointLight(0xff6d1a,7,8);glow.position.set(5.0,1.45,2.45);scene.add(glow);
+// The shower progressively extinguishes all visible fire effects over eight seconds.
+const FIRE_FADE_DURATION_MS=8000;
+window.startShowerFireFade=function(){
+ if(window.showerFireFadeStart==null && !window.showerFireExtinguished){
+  window.showerFireFadeStart=performance.now();
+ }
+};
+const fireClock=new T.Clock();
+function animateFire(){
+ requestAnimationFrame(animateFire);
+ const t=fireClock.getElapsedTime();
+ const started=window.showerFireFadeStart;
+ const progress=window.showerFireExtinguished?1:(started==null?0:Math.min(1,(performance.now()-started)/FIRE_FADE_DURATION_MS));
+ const strength=1-progress;
+ flames.forEach(f=>{
+  const v=1+.17*Math.sin(t*8+f.phase);
+  f.mesh.scale.set(v*strength,(.82+.3*Math.sin(t*7+f.phase))*strength,v*strength);
+  f.mesh.position.y=f.baseY+.07*Math.sin(t*5+f.phase);
+  f.mesh.material.opacity=.75*strength;
+  if(progress>=1)f.mesh.visible=false;
+ });
+ embers.forEach(e=>{
+  const k=(e.phase+t*.32)%1;
+  e.mesh.position.set(Math.cos(e.angle+k*3)*(.18+k*.55),.3+k*3.2,Math.sin(e.angle+k*3)*(.2+k*.5));
+  e.mesh.material.opacity=.85*(1-k)*strength;
+  if(progress>=1)e.mesh.visible=false;
+ });
+ smoke.forEach(e=>{
+  const k=(e.phase+t*.11)%1;
+  e.mesh.position.set(Math.cos(e.angle)*k*.7,1.6+k*2.8,Math.sin(e.angle)*k*.6);
+  e.mesh.scale.setScalar((.6+k*2.2)*Math.max(.001,strength));
+  e.mesh.material.opacity=.18*(1-k)*strength;
+  if(progress>=1)e.mesh.visible=false;
+ });
+ glow.intensity=(6+2*Math.sin(t*12))*strength;
+ if(progress>=1 && !window.showerFireExtinguished){
+  window.showerFireExtinguished=true;
+  try{window.scientistHealthGame?.extinguish?.()}catch(e){console.warn(e)}
+  const status=document.getElementById('showerFixStatus');
+  if(status)status.textContent='FIRE EXTINGUISHED — all flames and smoke are gone';
+  window.showFireVictory?.();
+ }
+}
+
+animateFire();
+// REPLACEMENT: isolated prototype shower geometry (original shower completely removed).
+const emergencyShower=new T.Group();emergencyShower.position.set(9.05,0,-1.55);scene.add(emergencyShower);window.emergencyShower=emergencyShower;
+const prototypeBox=(w,h,d,x,y,z,c)=>box(w,h,d,x,y,z,c,emergencyShower);
+const prototypeCyl=(r1,r2,h,x,y,z,c)=>cyl(r1,r2,h,x,y,z,c,emergencyShower,20);
+prototypeBox(.58,.07,.55,0,.035,0,0x858e91);
+prototypeCyl(.045,.045,3.12,0,1.6,0,0xf2a11e);
+prototypeBox(.58,.055,.07,-.26,3.19,0,0x9aa7a9);
+prototypeCyl(.045,.045,.28,-.53,3.04,0,0x9aa7a9);
+prototypeCyl(.23,.13,.16,-.53,2.87,0,0xf2a11e);
+prototypeCyl(.013,.013,.78,-.23,2.72,.1,0x9aa7a9);
+const pullTriangle=new T.Group();pullTriangle.position.set(-.23,2.30,.1);emergencyShower.add(pullTriangle);window.showerPullTriangle=pullTriangle;
+for(const [ax,ay,bx,by] of [[0,.14,-.19,-.16],[-.19,-.16,.19,-.16],[.19,-.16,0,.14]]){
+ const a=new T.Vector3(ax,ay,0),b=new T.Vector3(bx,by,0),v=b.clone().sub(a);
+ const bar=new T.Mesh(new T.CylinderGeometry(.015,.015,v.length(),20),mat(0xe8e8e8));
+ bar.position.set((ax+bx)/2,(ay+by)/2,0);
+ bar.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),v.normalize());pullTriangle.add(bar);
+}
+prototypeBox(.35,.45,.02,.08,2.47,.15,0x159a54);
+// Create the shower target WITH its geometry, just like the faucet target.
+const labShowerTarget=new T.Mesh(new T.SphereGeometry(.48,24,16),new T.MeshBasicMaterial({color:0xff2525,transparent:true,opacity:0,depthTest:false,depthWrite:false,side:T.DoubleSide}));
+labShowerTarget.position.set(-.23,2.30,.1);labShowerTarget.renderOrder=1002;labShowerTarget.frustumCulled=false;
+emergencyShower.add(labShowerTarget);window.labShowerTarget=labShowerTarget;
+// Wall-mounted chemistry laboratory sink cabinet, inspired by the reference image.
+// Positioned immediately to the left of the fume hood along the same wall, facing into the room.
+(function(){
+ const sink=new T.Group();sink.position.set(4.45,0,-4.55);sink.rotation.y=Math.PI;scene.add(sink);
+ window.interactiveLabSink=sink;
+ const sb=(w,h,d,x,y,z,c)=>box(w,h,d,x,y,z,c,sink);
+ const sc=(r1,r2,h,x,y,z,c)=>cyl(r1,r2,h,x,y,z,c,sink,24);
+ const oak=0xc9955d,oakLight=0xe0ad73,black=0x1c2428,steel=0xb9c4c8;
+ // Freestanding light-oak cabinet with black kick plate and side panels.
+ sb(2.65,.16,1.08,0,.12,0,black);
+ sb(2.65,.94,1.08,0,.65,0,oak);
+ sb(2.72,.12,1.16,0,1.17,0,black);
+ for(const x of [-1.23,-.49,.49,1.23])sb(.025,.88,.025,x,.67,-.548,0x8b623e);
+ for(const x of [-.89,0,.89]){
+   sb(.73,.77,.027,x,.65,-.555,oakLight);
+   // Dark vertical cabinet handles on the front.
+   sb(.035,.18,.035,x+.23,.74,-.585,steel);
+   sb(.085,.025,.035,x+.23,.82,-.585,steel);
+ }
+ // Recessed black sink bowl with visible dark interior and raised rim.
+ sb(1.35,.035,.68,0,1.245,-.04,0x090f14);
+ sb(1.13,.025,.49,0,1.204,-.04,0x222b31);
+ for(const x of [-.64,.64])sb(.075,.055,.78,x,1.28,-.04,black);
+ for(const z of [-.41,.33])sb(1.36,.055,.07,0,1.28,z,black);
+ // Ribbed black draining boards on either side.
+ for(const x of [-.99,.99]){
+   sb(.55,.026,.78,x,1.25,-.04,0x20272b);
+   for(let i=0;i<7;i++)sb(.025,.009,.67,x-.22+i*.073,1.274,-.04,0x586168);
+ }
+ // Chrome gooseneck tap: stem, curved arch and downward spout.
+ sc(.047,.047,.23,0,1.39,.34,steel);
+ const curve=new T.CatmullRomCurve3([
+  new T.Vector3(0,1.48,.34),new T.Vector3(0,1.73,.34),
+  new T.Vector3(0,1.88,.23),new T.Vector3(0,1.82,.07),
+  new T.Vector3(0,1.66,.05)]);
+ sink.add(new T.Mesh(new T.TubeGeometry(curve,24,.035,9,false),new T.MeshStandardMaterial({color:0xc9d4d8,metalness:.85,roughness:.17})));
+ sc(.046,.046,.06,0,1.63,.05,0x7f929b);
+ const tapTarget=new T.Mesh(new T.SphereGeometry(.23,16,12),new T.MeshBasicMaterial({visible:false}));tapTarget.position.set(0,1.66,.19);sink.add(tapTarget);window.labFaucetTarget=tapTarget;
+ for(const x of [-.18,.18]){
+   sc(.045,.045,.09,x,1.34,.34,steel);
+   sb(.16,.025,.045,x,1.41,.34,steel);
+ }
+})();
+// Put the visitor facing the chemistry demonstration when they enter.
+start.addEventListener('click',()=>{camera.position.set(5.0,1.65,5.0);yaw=0;pitch=-.04;document.getElementById('room').textContent='🔥 Chemistry lab accident';});
+document.querySelector('#hud h1').textContent='🔥 CHEMISTRY LAB · FIRE SCENE';
+document.getElementById('objective').textContent='A freestanding orange emergency safety shower and eyewash is in the middle of the lab. The scientist remains in front of the fume hood, and a wooden sink cabinet sits directly beside the fume hood.';
+document.querySelector('#intro h2').textContent='Chemistry Lab — Dramatic Fire Scene';
+document.querySelector('#intro p').textContent='Explore a stylized 3D chemistry laboratory where a scientist in a white lab coat is engulfed in animated flames beside a workstation. This is a fictional, non-graphic visual scene.';
+document.getElementById('help').textContent='WASD move · Drag mouse to look around · Shift to run · Explore the animated chemistry lab fire scene';
+document.getElementById('guide').style.display='none';
+document.getElementById('targetBubble').style.display='none';
+})();
+</script>
+
+<script>
+// Interactive sink faucet: click the chrome tap to toggle animated running water.
+(function(){
+ const sink=window.interactiveLabSink, target=window.labFaucetTarget;
+ if(!sink||!target)return;
+ let running=false;window.labFaucetRunning=false;
+ const water=new T.Group();sink.add(water);
+ const waterMat=new T.MeshBasicMaterial({color:0x75dfff,transparent:true,opacity:.68,depthWrite:false});
+ const stream=new T.Mesh(new T.CylinderGeometry(.018,.027,.38,12),waterMat);
+ stream.position.set(0,1.42,.05);water.add(stream);
+ const drops=[];
+ for(let i=0;i<15;i++){
+   const d=new T.Mesh(new T.SphereGeometry(.018,7,6),new T.MeshBasicMaterial({color:0xb0f3ff,transparent:true,opacity:.8}));
+   water.add(d);drops.push(d);
+ }
+ const splash=new T.Mesh(new T.TorusGeometry(.095,.012,6,24),new T.MeshBasicMaterial({color:0x85e8ff,transparent:true,opacity:.65,side:T.DoubleSide}));
+ splash.rotation.x=Math.PI/2;splash.position.set(0,1.218,.05);water.add(splash);
+ water.visible=false;
+ function toggleFaucet(){running=!running;window.labFaucetRunning=running;water.visible=running;const b=document.getElementById('prototypeFaucetButton');if(b)b.textContent='Faucet '+(running?'ON — click to turn OFF':'OFF — click to turn ON');msg(running?'💧 Faucet ON — water is flowing. Click the faucet again to turn it off.':'🚰 Faucet OFF — water stopped.');}
+ window.prototypeToggleFaucet=toggleFaucet;
+ target.material=new T.MeshBasicMaterial({color:0x22ee66,transparent:true,opacity:0,depthTest:false,depthWrite:false});target.renderOrder=1001;
+ // Faucet and shower are handled by the single priority canvas handler above.
+ let last=0;
+ function animateWater(time){requestAnimationFrame(animateWater);if(!running)return;
+   const t=time*.001;
+   stream.scale.y=.96+.045*Math.sin(t*12);
+   drops.forEach((d,i)=>{const v=(t*1.8+i/15)%1;d.position.set(Math.sin(i*5.3)*.055*v,1.62-v*.39,.05+Math.cos(i*3.1)*.05*v);d.scale.setScalar(.5+v*.6)});
+   splash.scale.setScalar(.85+.18*Math.sin(t*11));
+ }
+ requestAnimationFrame(animateWater);
+ document.getElementById('help').textContent+=' · Click sink faucet to turn water on/off';
+ document.getElementById('objective').textContent+=' Click the chrome faucet to toggle running water.';
+})();
+</script>
+<script>
+// Pick-up 500 mL glass beaker and water filling interaction.
+(function(){
+ const sink=window.interactiveLabSink;if(!sink)return;
+ const beaker=new T.Group();sink.add(beaker);
+ const glass=new T.MeshPhysicalMaterial({color:0xd7f5ff,transparent:true,opacity:.32,roughness:.12,metalness:0,side:T.DoubleSide,depthWrite:false});
+ const rimMat=new T.MeshStandardMaterial({color:0xe6faff,metalness:.12,roughness:.2});
+ const wall=new T.Mesh(new T.CylinderGeometry(.19,.175,.39,40,1,true),glass);wall.position.y=.21;beaker.add(wall);
+ const base=new T.Mesh(new T.CylinderGeometry(.175,.175,.018,40),glass);base.position.y=.015;beaker.add(base);
+ const rim=new T.Mesh(new T.TorusGeometry(.19,.012,9,40),rimMat);rim.rotation.x=Math.PI/2;rim.position.y=.405;beaker.add(rim);
+ const lip=new T.Mesh(new T.ConeGeometry(.038,.055,3),glass);lip.rotation.z=-Math.PI/2;lip.position.set(-.191,.398,0);beaker.add(lip);
+ const water=new T.Mesh(new T.CylinderGeometry(.164,.155,.01,36),new T.MeshPhysicalMaterial({color:0x56c9f3,transparent:true,opacity:.72,roughness:.18,depthWrite:false}));water.position.y=.025;beaker.add(water);
+ for(let i=1;i<=5;i++){const tick=new T.Mesh(new T.BoxGeometry(i===5?.09:.05,.006,.006),rimMat);tick.position.set(.186,.065+i*.065,0);beaker.add(tick)}
+ const hitTarget=new T.Mesh(new T.CylinderGeometry(.23,.23,.49,16),new T.MeshBasicMaterial({visible:false}));hitTarget.position.y=.22;beaker.add(hitTarget);
+ beaker.position.set(-.88,1.29,-.06); // right side as viewed facing the cabinet
+ let holding=false,level=0,last=performance.now(),filling=false;
+ window.labBeaker={get holding(){return holding},get level(){return level},useWater(amount){if(!holding||level<amount)return false;level-=amount;updateLabel();return true},get position(){return beaker.getWorldPosition(new T.Vector3())}};
+ const ray=new T.Raycaster();
+ const status=document.createElement('div');status.style.cssText='position:fixed;bottom:145px;right:15px;z-index:8;padding:10px 14px;background:#0b2639e8;border:1px solid #8bd8f3;border-radius:10px;color:white;font:13px system-ui;display:none;max-width:290px';document.body.appendChild(status);
+ const localSpout=new T.Vector3(0,1.62,.05),spout=sink.localToWorld(localSpout.clone());
+ const worldPos=new T.Vector3(),handPos=new T.Vector3(),screen=new T.Vector2();
+ function updateLabel(){status.style.display=holding?'block':'none';status.textContent='🧪 Beaker: '+Math.round(level)+' / 500 mL · '+(filling?'Filling with water…':'Aim at the running faucet to fill · G to put down');document.getElementById('held').textContent=holding?'500 mL beaker':'Nothing'}
+ function pickup(){if(holding)return;holding=true;scene.attach(beaker);msg('🧪 Picked up 500 mL beaker. Turn on the faucet and aim toward the running water to fill it. Press G to set it down.');updateLabel()}
+ function putDown(){if(!holding)return;holding=false;sink.attach(beaker);beaker.position.set(-.88,1.29,-.06);beaker.rotation.set(0,0,0);filling=false;msg('Beaker placed beside the faucet ('+Math.round(level)+' mL).');updateLabel()}
+ renderer.domElement.addEventListener('click',function(e){if(!started||holding)return;const r=renderer.domElement.getBoundingClientRect();screen.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(screen,camera);const hits=ray.intersectObject(hitTarget,false);if(hits.length&&hits[0].distance<4){pickup();e.stopImmediatePropagation()}},true);
+ document.addEventListener('keydown',e=>{if(e.code==='KeyG'&&holding){e.stopImmediatePropagation();putDown()}},true);
+ function animate(t){requestAnimationFrame(animate);const dt=Math.min(.06,(t-last)/1000);last=t;
+  if(holding){
+   // Beaker follows the player's view. Looking toward the faucet places it under the water.
+   handPos.set(.12,-.37,-.78).applyQuaternion(camera.quaternion).add(camera.position);
+   beaker.position.lerp(handPos,.24);beaker.quaternion.copy(camera.quaternion);
+   // Water flows only when the faucet is running and the beaker is held near its spout.
+   const faucetOn=!!window.labFaucetRunning;
+   worldPos.copy(beaker.position);
+   const nearSpout=worldPos.distanceTo(spout)<.65;
+   filling=faucetOn&&nearSpout&&level<500;
+   if(filling){level=Math.min(500,level+dt*125);}
+   updateLabel();
+  }
+  const h=Math.max(.008,.31*level/500);water.scale.y=h/.01;water.position.y=.025+(h-.01)/2;
+ }
+ requestAnimationFrame(animate);
+ document.getElementById('help').textContent+=' · Click glass beaker to pick up · Hold beneath running faucet to fill · Click the green target on the scientist to pour water and pause damage (more water = longer protection) · G put down';
+ document.getElementById('objective').textContent+=' A 500 mL glass beaker sits to the right of the faucet; pick it up and hold it beneath running water.';
+})();
+</script>
+
+<style>
+/* Arcade fighting-game inspired health display, above all 3D fire effects. */
+#scientistHealth{position:fixed;top:16px;right:18px;left:auto;z-index:105;width:min(520px,calc(100vw - 36px));pointer-events:none;display:flex;filter:drop-shadow(0 4px 7px #000e);font-family:Impact,'Arial Black',system-ui,sans-serif}
+#scientistHealth .healthTitle{font-size:17px;letter-spacing:1.3px;color:#f6ffff;text-align:left;text-shadow:2px 2px #000,-1px -1px #183e50;padding:0 8px 5px;background:none}
+#scientistHealth .healthTrack{height:33px;background:linear-gradient(#270b13,#5b1018 45%,#29060b);border:3px solid #161c24;border-radius:10px 7px 14px 9px;overflow:hidden;position:relative;box-shadow:0 0 0 2px #b8c4a4,0 0 0 4px #293c42,inset 0 2px 6px #000c,0 3px 9px #000c;transform:skewX(-7deg)}
+#scientistHealth .healthFill{height:100%;width:100%;background:linear-gradient(to bottom,#ffff9e 0%,#fff934 20%,#ffe500 48%,#e5b900 79%,#9b8b16 100%);box-shadow:inset 0 2px 1px #ffffc9,inset 0 -3px 3px #a87500;transform-origin:left;transition:width .05s linear;position:relative}
+#scientistHealth .healthFill:after{content:'';position:absolute;inset:2px 0 auto;height:5px;background:#fff9a7aa;border-radius:5px}
+#scientistHealth .healthNumber{position:absolute;inset:0;text-align:center;font:bold 16px/27px Impact,'Arial Black',system-ui,sans-serif;color:#fff;text-shadow:2px 2px 2px #000,-1px -1px #000;transform:skewX(7deg)}
+#scientistHealth .healthWarning{font:bold 13px Impact,'Arial Black',system-ui,sans-serif;letter-spacing:1px;color:#ffdbca;text-align:left;text-shadow:2px 2px 3px #000;margin:8px 0 0 7px}
+#scientistHealth.critical .healthTrack{animation:healthPulse .35s infinite alternate;box-shadow:0 0 0 2px #ffaaa2,0 0 0 4px #7c1921,0 0 20px #ff2419}
+@keyframes healthPulse{to{filter:brightness(1.45)}}
+#fireGameOver{display:none;position:fixed;inset:0;z-index:110;background:#10090bdc;align-items:center;justify-content:center;text-align:center;padding:24px}
+#fireGameOver .gameOverCard{background:#25171c;border:2px solid #ff5a4e;border-radius:18px;padding:30px;max-width:460px;color:white;box-shadow:0 12px 55px #000c}
+#fireGameOver h2{font-size:38px;color:#ff7164;margin:0 0 10px}
+#scientistHealth{align-items:center;gap:12px;padding:10px 13px;background:linear-gradient(115deg,#0b1a2cf2,#1c3445ed);border:2px solid #9aaeb5;border-radius:12px;box-shadow:0 8px 25px #000b;}
+#scientistHealth .healthPortrait{width:76px;height:84px;flex:none;border:3px solid #d2b95d;border-radius:8px;overflow:hidden;box-shadow:0 0 0 2px #263e49,inset 0 0 8px #000;}
+#scientistHealth .healthPortrait svg{width:100%;height:100%;display:block}
+#scientistHealth .healthDetails{flex:1;min-width:0}
+#scientistHealth .healthTitle{font-size:18px;padding:0 0 9px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+#scientistHealth .healthTag{font:700 11px system-ui,sans-serif;color:#9af8dc}
+#scientistHealth .healthTrack{height:34px}
+@media(max-width:620px){#scientistHealth{top:8px;right:8px;width:min(310px,calc(100vw - 16px));padding:7px;gap:7px}#scientistHealth .healthPortrait{width:51px;height:62px}#scientistHealth .healthTitle{font-size:13px;padding-bottom:5px}#scientistHealth .healthTrack{height:27px}#scientistHealth .healthNumber{font-size:13px;line-height:21px}#scientistHealth .healthWarning{font-size:10px;margin-top:5px}}
+</style>
+<div id="scientistHealth" aria-label="Scientist health meter"><div class="healthPortrait"><svg viewBox="0 0 90 100" role="img" aria-label="Scientist portrait" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="portraitBg" x2="1" y2="1"><stop stop-color="#244d66"/><stop offset="1" stop-color="#071622"/></linearGradient></defs><rect width="90" height="100" rx="8" fill="url(#portraitBg)"/><path d="M7 100 Q10 68 29 65 L61 65 Q81 68 85 100" fill="#f1f5f8" stroke="#a3c8da" stroke-width="2"/><path d="M29 66 L44 90 L61 66 L53 100 L36 100Z" fill="#b4d6e5"/><path d="M39 65 L45 76 L51 65" fill="#283d50"/><rect x="39" y="56" width="13" height="14" rx="5" fill="#dba67e"/><ellipse cx="45" cy="37" rx="23" ry="29" fill="#e7b28a"/><path d="M22 40 Q14 3 45 7 Q75 2 69 41 L62 25 Q45 34 27 24Z" fill="#2a2a31"/><path d="M30 40 h11 m8 0 h11" stroke="#293c47" stroke-width="2.5"/><path d="M43 39 h5" stroke="#293c47" stroke-width="2"/><path d="M40 54 Q45 58 51 54" fill="none" stroke="#9b5749" stroke-width="2"/><path d="M10 100 Q10 82 20 74" stroke="#ffb039" stroke-width="4" opacity=".8"/></svg></div><div class="healthDetails"><div class="healthTitle">SCIENTIST <span class="healthTag">PLAYER 1</span></div><div class="healthTrack"><div class="healthFill" id="scientistHealthFill"></div><div class="healthNumber" id="scientistHealthNumber">100%</div></div><div class="healthWarning" id="scientistHealthWarning">FIRE DAMAGE!</div></div></div>
+<div id="fireGameOver"><div class="gameOverCard"><h2>GAME OVER</h2><p>The scientist's health reached zero.</p><p>The scientist collapsed before the fire could be extinguished.</p><button id="restartFireGame">TRY AGAIN</button></div></div>
+<style>
+#fireVictory{display:none;position:fixed;inset:0;z-index:100000;background:radial-gradient(ellipse at center,#17495d 0%,#091b32 55%,#050c1c 100%);align-items:center;justify-content:center;text-align:center;color:#f7fcff;font-family:system-ui,Arial,sans-serif;overflow:hidden}
+#fireVictory.active{display:flex;animation:victoryReveal .85s ease-out both}
+#fireVictory .victoryCard{position:relative;z-index:2;max-width:680px;padding:38px 28px}
+#fireVictory .victoryIcon{font-size:70px;filter:drop-shadow(0 0 20px #ffda73)}
+#fireVictory h2{font-size:clamp(42px,7vw,85px);margin:12px 0;color:#ffe389;letter-spacing:.07em;text-shadow:0 4px 0 #835727,0 0 35px #ffcf6380}
+#fireVictory p{font-size:clamp(18px,2.5vw,25px);margin:10px 0 25px}
+#fireVictory .victorySub{color:#a8e9ec;font-size:17px}
+#fireVictory button{margin:9px;padding:13px 20px;border:0;border-radius:10px;background:#ffe08a;color:#132e39;font-weight:800;cursor:pointer}
+#fireVictory button.secondary{background:#2d6075;color:white;border:1px solid #7cc5d6}
+#fireVictory .spark{position:absolute;width:9px;height:9px;background:#ffe28e;transform:rotate(45deg);opacity:.8;animation:victorySpark 3s ease-in-out infinite alternate}
+@keyframes victoryReveal{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:scale(1)}}
+@keyframes victorySpark{from{transform:translateY(25px) rotate(0deg);opacity:.15}to{transform:translateY(-70px) rotate(180deg);opacity:1}}
+</style>
+<div id="fireVictory" role="dialog" aria-modal="true" aria-labelledby="victoryTitle"><div class="victoryCard"><div class="victoryIcon">🏆</div><h2 id="victoryTitle">VICTORY!</h2><p>🔥 FIRE EXTINGUISHED! 🚿</p><div class="victorySub">You activated the emergency shower and saved the laboratory.</div><div><button id="victoryReplayMusic">♪ Replay victory fanfare</button><button class="secondary" id="victoryRestart">Play again</button></div></div></div>
+<script>
+// Original short celebratory fanfare, not the Final Fantasy melody.
+(function(){
+ 'use strict';
+ let ctx=null, shown=false;
+ function getAudio(){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)return null;
+  if(!ctx)ctx=new AC();
+  if(ctx.state==='suspended')ctx.resume().catch(()=>{});
+  return ctx;
+ }
+ window.prepareVictoryAudio=function(){try{getAudio()}catch(e){console.warn('Victory audio unavailable',e)}};
+ function playFanfare(){
+  try{
+   const ac=getAudio();if(!ac)return;
+   const start=ac.currentTime+.06;
+   // Original ascending brass-like triads with a sustained ending.
+   const notes=[[392,0,.16],[493.88,.17,.16],[587.33,.34,.18],[783.99,.54,.30],[587.33,.9,.16],[783.99,1.08,.18],[987.77,1.30,.60],[783.99,2.04,.16],[987.77,2.23,.18],[1174.66,2.45,.72]];
+   notes.forEach(([hz,offset,duration],index)=>{
+    const osc=ac.createOscillator(),gain=ac.createGain();
+    osc.type='triangle';osc.frequency.setValueAtTime(hz,start+offset);
+    const t=start+offset;gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.13,t+.035);
+    gain.gain.setValueAtTime(.13,t+Math.max(.05,duration-.10));gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
+    osc.connect(gain);gain.connect(ac.destination);osc.start(t);osc.stop(t+duration+.02);
+   });
+  }catch(e){console.warn('Could not play fanfare',e)}
+ }
+ window.showFireVictory=function(){
+  if(shown)return;shown=true;
+  const screen=document.getElementById('fireVictory');
+  for(let i=0;i<28;i++){const star=document.createElement('i');star.className='spark';star.style.left=(5+(i*37)%90)+'%';star.style.top=(9+(i*23)%85)+'%';star.style.animationDelay=(i%9*.22)+'s';screen.appendChild(star)}
+  screen.classList.add('active');playFanfare();
+ };
+ document.getElementById('victoryReplayMusic').addEventListener('click',playFanfare);
+ document.getElementById('victoryRestart').addEventListener('click',()=>location.reload());
+})();
+</script>
+<script>
+// Independent health system: does not depend on the Three.js render loop.
+(function () {
+  'use strict';
+  const bar = document.getElementById('scientistHealthFill');
+  const number = document.getElementById('scientistHealthNumber');
+  const warning = document.getElementById('scientistHealthWarning');
+  const meter = document.getElementById('scientistHealth');
+  const gameOver = document.getElementById('fireGameOver');
+  const enter = document.getElementById('start');
+  let hp = 100, running = false, dead = false, coolingUntil = 0, extinguished = false;
+  let lastTick = performance.now();
+  const NORMAL_DAMAGE = 7.5, COOLED_DAMAGE = 0, COOLING_MS = 5500;
+  window.scientistHealthGame = {
+    get health(){ return hp; },
+    get running(){ return running; },
+    get dead(){ return dead; },
+    get extinguished(){return extinguished;},
+    extinguish(){if(dead || !running)return false; extinguished=true; coolingUntil=Infinity; display(performance.now()); return true;},
+    cool(amount){ if(!running || dead || amount <= 0)return false; const duration = COOLING_MS * Math.min(1, amount / 500); coolingUntil = performance.now() + duration; return duration / 1000; }
+  };
+  function display(now) {
+    const percent = Math.max(0, Math.min(100, hp));
+    meter.style.display = 'flex';
+    bar.style.width = percent.toFixed(2) + '%';
+    bar.style.transform = 'none';
+    number.textContent = percent.toFixed(1) + '%';
+    meter.classList.toggle('critical', percent < 30 && !dead);
+    warning.textContent = dead ? 'NO HEALTH REMAINING' :
+      extinguished ? '🚿 SHOWER ACTIVATED — FIRE EXTINGUISHED' :
+      now < coolingUntil ? '💧 WATER PROTECTION — NO DAMAGE (' + Math.ceil((coolingUntil-now)/1000) + 's)' :
+      percent < 30 ? '⚠ CRITICAL — FIRE DAMAGE!' : '🔥 FIRE DAMAGE — HEALTH FALLING';
+  }
+  function step() {
+    const now = performance.now();
+    if(running && !dead) {
+      const elapsed = Math.max(0, Math.min(0.25, (now-lastTick)/1000));
+      hp = Math.max(0, hp - elapsed * (extinguished || now < coolingUntil ? COOLED_DAMAGE : NORMAL_DAMAGE));
+      if(hp <= 0) {
+        dead = true;
+        try { if(typeof msg === 'function') msg('Game over: the scientist has collapsed.'); } catch(e) {}
+        setTimeout(() => { gameOver.style.display = 'flex'; }, 1100);
+      }
+    }
+    lastTick = now;
+    display(now);
+  }
+  // Attach to the actual Enter Lab button, not to rendering state.
+  function begin() { running = true; lastTick = performance.now(); step(); }
+  enter.addEventListener('click', begin, true);
+  document.getElementById('restartFireGame').addEventListener('click', () => location.reload());
+  display(lastTick);
+  setInterval(step, 50);
+  // Make sure health still runs if another game action hides the intro overlay.
+  const intro = document.getElementById('overlay');
+  new MutationObserver(() => {
+    if(!running && (intro.style.display === 'none' || getComputedStyle(intro).display === 'none')) begin();
+  }).observe(intro, {attributes:true, attributeFilter:['style','class']});
+})();
+</script>
+<script>
+// Optional 3D effects are isolated: errors here cannot stop the health countdown.
+(function () {
+  const state = window.scientistHealthGame;
+  try {
+    // Bright green pour target is visible only when the player holds a filled beaker.
+    const rescueTarget = new T.Mesh(
+      new T.SphereGeometry(.32,24,16),
+      new T.MeshBasicMaterial({color:0x25f56c,transparent:true,opacity:.83,depthTest:false,depthWrite:false})
+    );
+    rescueTarget.position.set(0,1.43,.43);
+    rescueTarget.renderOrder=2000;
+    rescueTarget.visible=false;
+    scientist.add(rescueTarget);
+    const halo=new T.Mesh(new T.RingGeometry(.37,.46,32),new T.MeshBasicMaterial({color:0xc7ff9e,side:T.DoubleSide,transparent:true,opacity:.85,depthTest:false,depthWrite:false}));
+    halo.position.set(0,1.43,.48);halo.renderOrder=2001;halo.visible=false;scientist.add(halo);
+    const ray = new T.Raycaster(), pointer = new T.Vector2();
+    const center=new T.Vector3(), projected=new T.Vector3();
+    const pourStatus=document.createElement('div');
+    pourStatus.id='beakerPourHint';
+    pourStatus.style.cssText='position:fixed;bottom:85px;left:50%;transform:translateX(-50%);z-index:30;background:#114a2ce8;color:#eaffed;border:2px solid #65fa88;border-radius:12px;padding:10px 16px;font:bold 14px system-ui;text-align:center;pointer-events:none;display:none';
+    pourStatus.textContent='🟢 CLICK GREEN TARGET ON SCIENTIST TO POUR WATER';
+    document.body.appendChild(pourStatus);
+    // Screen-space target follows the scientist's chest, never the faucet.
+    const chestButton=document.createElement('button');
+    chestButton.id='scientistPourButton';
+    chestButton.type='button';
+    chestButton.textContent='💧 POUR ON SCIENTIST';
+    chestButton.style.cssText='position:fixed;z-index:120;display:none;transform:translate(-50%,-50%);background:#19d85a;color:#062a15;border:3px solid white;border-radius:30px;padding:12px 17px;font:bold 13px system-ui;box-shadow:0 0 0 5px #19d85a66,0 0 22px #19d85a;cursor:pointer;white-space:nowrap;pointer-events:auto';
+    document.body.appendChild(chestButton);
+    let pouring=false;
+    chestButton.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();if(!nearby())return msg('Move closer to the scientist to pour water.');pour();},true);
+    function splashEffect(){
+      const origin=new T.Vector3();rescueTarget.getWorldPosition(origin);
+      const drops=[];
+      for(let i=0;i<26;i++){
+        const m=new T.Mesh(new T.SphereGeometry(.025+Math.random()*.025,7,6),new T.MeshBasicMaterial({color:0x58d9ff,transparent:true,opacity:.9,depthWrite:false}));
+        m.position.copy(origin);scene.add(m);
+        drops.push({mesh:m,v:new T.Vector3((Math.random()-.5)*2.2,Math.random()*2.4+.5,(Math.random()-.5)*2.2)});
+      }
+      const start=performance.now();
+      function animateSplash(now){const t=(now-start)/1000;
+        for(const d of drops){d.mesh.position.copy(origin).addScaledVector(d.v,t);d.mesh.position.y-=2.7*t*t;d.mesh.material.opacity=Math.max(0,1-t/1.1)}
+        if(t<1.1)requestAnimationFrame(animateSplash);else drops.forEach(d=>{scene.remove(d.mesh);d.mesh.geometry.dispose();d.mesh.material.dispose()});
+      }
+      requestAnimationFrame(animateSplash);
+    }
+    function pour(){
+      const b=window.labBeaker;
+      if(!state.running||state.dead||state.extinguished||!b||!b.holding||pouring)return;
+      if(b.level<=0){msg('The beaker is empty. Fill it with water first.');return;}
+      const amount=b.level;
+      if(b.useWater(amount)){
+        pouring=true;splashEffect();
+        const seconds=state.cool(amount);
+        msg('💧 Poured '+Math.round(amount)+' mL onto scientist! Beaker empty. Fire damage paused for '+seconds.toFixed(1)+' seconds.');
+        setTimeout(()=>{pouring=false},850);
+      }
+    }
+    function nearby(){const p=new T.Vector3();scientist.getWorldPosition(p);return camera.position.distanceTo(p)<5.5;}
+    function updatePourTarget(t){
+      requestAnimationFrame(updatePourTarget);
+      const b=window.labBeaker;
+      const visible=!!(state.running&&!state.dead&&!state.extinguished&&b?.holding&&b.level>0);
+      rescueTarget.visible=visible;halo.visible=visible;
+      // Keep a real world-space clickable sphere attached to the scientist.
+      scientist.updateWorldMatrix(true,true);camera.updateMatrixWorld(true);
+      const chest=scientist.localToWorld(new T.Vector3(0,1.38,.28));
+      const projectedChest=chest.clone().project(camera);
+      const inView=projectedChest.z>-1&&projectedChest.z<1&&Math.abs(projectedChest.x)<.95&&Math.abs(projectedChest.y)<.95;
+      chestButton.style.display='none';
+      if(visible&&inView){chestButton.style.left=((projectedChest.x+1)*.5*innerWidth)+'px';chestButton.style.top=((1-projectedChest.y)*.5*innerHeight)+'px';}
+      pourStatus.style.display=visible&&inView?'block':'none';
+    }
+    requestAnimationFrame(updatePourTarget);
+    // Match the faucet: raycast against the real 3D sphere, not a projected HTML button.
+    renderer.domElement.addEventListener('click', function(e){
+      const b=window.labBeaker;
+      if(!state.running || state.dead || state.extinguished || !b || !b.holding || b.level<=0)return;
+      const rect=renderer.domElement.getBoundingClientRect();
+      pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);
+      camera.updateMatrixWorld(true);scientist.updateWorldMatrix(true,true);
+      ray.setFromCamera(pointer,camera);
+      const hits=ray.intersectObject(rescueTarget,false);
+      if(!hits.length)return;
+      e.preventDefault();e.stopImmediatePropagation();
+      if(!nearby()){msg('Move closer to the scientist to pour water.');return;}
+      pour();
+    },true);
+    let fall=0, previous=performance.now();
+    function collapse(now) {
+      requestAnimationFrame(collapse);
+      const dt=Math.min(.06,Math.max(0,(now-previous)/1000));previous=now;
+      if(!state.dead)return;
+      fall=Math.min(1,fall+dt*1.15);
+      scientist.rotation.z=-Math.PI*.47*fall;
+      scientist.position.y=-.12*fall;
+      for(const f of flames) f.mesh.visible=false;
+      for(const e of embers) e.mesh.visible=false;
+      for(const e of smoke) e.mesh.visible=false;
+      glow.intensity=0;
+    }
+    requestAnimationFrame(collapse);
+  } catch(error) { console.error('Optional rescue/collapse effects:',error); }
+  document.getElementById('objective').textContent+=' Fill the beaker with any amount of water, then click the scientist while holding it to empty the beaker and pause damage for a duration based on the water amount.';
+})();
+</script>
+
+<style>
+#showerFixPanel{display:none!important;position:fixed;top:155px;left:115px;z-index:10000;background:#102b3f;color:#fff;border:2px solid #61e8c0;border-radius:12px;padding:12px;font:13px system-ui;max-width:370px;box-shadow:0 4px 20px #0008}
+#showerFixPanel button{background:#69e6bd;color:#092e2b;font-weight:bold;border:0;border-radius:7px;padding:11px 14px;margin:5px;cursor:pointer}
+#showerFixStatus{display:block;margin-top:6px;color:#fff4b8;overflow-wrap:anywhere}
+</style>
+<div id="showerFixPanel"><strong>🚿 SHOWER CONTROL — FIRE FADE</strong><div><button type="button" id="showerFixToggle">SHOWER OFF — TURN ON</button><button type="button" id="showerFixGo">GO TO SHOWER</button></div><span id="showerFixStatus">Initializing…</span></div>
+<script>
+(function(){
+ 'use strict';
+ const status=document.getElementById('showerFixStatus');
+ const btn=document.getElementById('showerFixToggle');
+ const go=document.getElementById('showerFixGo');
+ try {
+  if(typeof T==='undefined'||!window.emergencyShower)throw Error('Scene/shower object unavailable');
+  const root=window.emergencyShower;
+  if(window.labFaucetTarget?.material){window.labFaucetTarget.material.transparent=true;window.labFaucetTarget.material.opacity=0;}
+  let target=window.labShowerTarget;
+  if(!target){target=new T.Mesh(new T.SphereGeometry(.48,24,16),new T.MeshBasicMaterial({color:0xff3333,transparent:true,opacity:0,depthTest:false,depthWrite:false}));target.position.set(-.23,2.30,.1);root.add(target);window.labShowerTarget=target;}
+  target.material.transparent=true;target.material.opacity=0;
+  const water=new T.Group();root.add(water);
+  for(let i=0;i<20;i++){
+   const a=2*Math.PI*i/20,r=.06+.06*(i%3);
+   const stream=new T.Mesh(new T.CylinderGeometry(.012,.018,1.8,10),new T.MeshBasicMaterial({color:0x4bdfff,transparent:true,opacity:.86,depthWrite:false}));
+   stream.position.set(-.53+Math.cos(a)*r,1.85,Math.sin(a)*r);water.add(stream);
+  }
+  water.visible=false;
+  let running=false;
+  function toggle(){
+   running=!running;water.visible=running;
+   if(window.showerPullTriangle)window.showerPullTriangle.position.y=running?2.05:2.30;
+   target.position.y=running?2.05:2.30;
+   btn.textContent=running?'SHOWER ON — TURN OFF':'SHOWER OFF — TURN ON';
+   status.textContent=window.showerFireExtinguished?'FIRE EXTINGUISHED — all flames and smoke are gone':running?'SHOWER ON: flames fading over 8 seconds':'SHOWER OFF: water streams stopped';
+   if(running){try{window.prepareVictoryAudio?.();window.startShowerFireFade?.();window.scientistHealthGame?.cool?.(500)}catch(err){console.warn(err)}}
+  }
+  window.prototypeToggleShower=toggle;
+  // Only one explicit button listener. No duplicate IDs, nested script tags, or nested IIFEs.
+  btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggle()});
+  go.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();
+   camera.position.set(8.5,1.65,.6);
+   root.updateWorldMatrix(true,true);
+   const p=target.getWorldPosition(new T.Vector3()),d=p.sub(camera.position);
+   yaw=Math.atan2(-d.x,-d.z);pitch=Math.atan2(d.y,Math.hypot(d.x,d.z));
+   camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;camera.updateMatrixWorld(true);
+   status.textContent='Shower in view — click red sphere or green ON/OFF button';
+  });
+  // Canvas hit detection; the original priority handler also uses prototypeToggleShower.
+  status.textContent='Controller READY — click green button to turn water ON';
+ } catch(err){status.textContent='CONTROLLER ERROR: '+err.message;console.error(err)}
+})();
+</script>
+</body></html>
